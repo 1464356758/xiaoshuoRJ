@@ -8,7 +8,9 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
+    apple: "/icon-192.png",
   },
+  appleWebApp:{capable:true,title:'小说工厂',statusBarStyle:'default'},
 };
 
 export default function RootLayout({

@@ -1,19 +1,28 @@
-已上线私有软件：https://ai-novel-factory.qq1464356758.chatgpt.site
-
 # 继续开发入口
 
-先读取本文件、PROJECT_STATUS.md、DEVELOPMENT_LOG.md、ARCHITECTURE.md、README.md以及main最近提交；检查现有工作而不是重建。
+先读取README、PROJECT_STATUS、DEVELOPMENT_LOG、ARCHITECTURE、本文件以及GitHub main最新提交，不覆盖既有测试通过的代码。
 
-## 优先下一步
+## 当前中断点
 
-1. 保留现有私有Site身份 `.openai/hosting.json`，不得再次注册Site。通过Sites托管技能打开既有源码并继续。
-2. 使用实际API凭据之前必须由用户在软件模型设置中配置并开启费用调用；不要从聊天索要明文，不开通付费服务。未配置时可做零费用软件测试。
-3. 获得可用模型后，实际运行100章故事规划与前三章，保留请求用量、审核证据、返修与成本。严格区分流程夹具通过和文学质量验收；不能拿合成测试代替小说。
-4. 补齐实际手机浏览器操作验证；本次受环境缺少control-browser技能影响，不能标为通过。
-5. 八个平台继续从官方核实投稿/福利/AI/独家；优先番茄与七猫，起点等反爬失败项保留未知。不用过期自媒体补齐数字。
-6. 后续优化：分阶段规划合同、服务器持久队列、第三方账单核对、语义重复独立校准、整书修订分支。
+V0.2已完成PWA安装、豆包、教程、云端job、未来大纲编辑与历史；33项单元/SQLite故障测试、TypeScript检查和生产构建通过。构建Worker HTTP集成14项通过。源码在 `/workspace/sites/novel-factory`，Site身份在 `.openai/hosting.json`，已打开既有source aefdcb2cd598354d8cc8be07bed0128d2fae66ae。不能新建Site。
 
-## 常用验证
+## 紧接着做
+
+1. 本次14项真实构建Worker HTTP检查已通过；不需要无理由重跑，不冒充浏览器。
+2. 将改版源码、教程和状态提交GitHub main，使用最新head expected_sha；不强推。
+3. 通过Sites workflow打包并私有部署V0.2，原受众不变。CLOUD_RUNNER_ENABLED=1已写托管环境，部署后生效；模型API尚未配置。
+4. 依 `docs/CLOUD_RUNNER.md` 真正使用get_site服务凭据调用writer并GET读取心跳；令牌只在内存和隐藏stdin，不能写入文件或命令参数。空任务验证不请求模型。
+5. 再用Sites create_schedule登记Asia/Shanghai每小时批次（最多80检查点/20分钟）。先读取已有automations防止重复，创建成功与实际运行分开记录。若任一路径不可用，保留代码与准确阻塞，不能宣称后台已接通。
+6. 将部署成功URL、writer验证结果、调度状态及最终GitHub提交写回开发文档。
+
+## 完成此次交付后的下一步
+
+- 用户只需在软件安全输入框配置自己的API Key、当前模型ID、已核实单价并决定费用上限；不要从聊天索要明文，不开通付费服务。
+- 可用模型后，运行100章故事规划及真实开篇三章，保留用量、费用、审核证据和返修；文学质量验收不能用合成数据代替。
+- 手机浏览器安装、暂停/大纲/编辑流程真实操作验证；当前环境缺control-browser技能仍未实测。
+- 完善八平台官方政策与投稿条件；跨供应商模型、手机推送、整书修订分支后续实现。
+
+## 验证入口
 
 `node --test tests/engine.test.mjs`
 
@@ -21,8 +30,6 @@
 
 `node <sites-plugin-root>/scripts/build-site.mjs`
 
-新D1 schema改动先`pnpm db:generate`，核验SQL再构建和发布。已应用迁移不可改写。
+`node scripts/verify-worker.mjs`
 
-源码写GitHub main须保护已有历史并先读取最新head；可用GitHub create_tree/create_commit/update_ref（expected_sha）提交，不能强推。生产数据库、正文及任何凭据禁止进入公开仓库。
-
-当前唯一需要用户的操作：进入模型设置，输入自己的API密钥、核实人民币单价和额度，并自主决定是否开启费用调用。真实小说与签约质量验证必须在这之后进行。无需用户处理普通技术设计。
+此改版复用现有records schema，无需新迁移；既有D1迁移不可改写。
