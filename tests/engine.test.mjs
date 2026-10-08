@@ -5,11 +5,13 @@ import {readFileSync,mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {Store,hash} from '../lib/store.mjs';
-import {createBook,step,saveChapter,unlockChapter,exportBook,settings,config,publicConfig,savePlan,testConnection} from '../lib/engine.mjs';
+import {createBook,step,saveChapter,unlockChapter,exportBook,settings,config,publicConfig,savePlan,testConnection,setBookBudget} from '../lib/engine.mjs';
 import {qualityGate,checkChapter,count,validatePlan} from '../lib/quality.mjs';
 import {modelCall,seal,defaults,callSpec} from '../lib/model.mjs';
 import {startJob,pauseJob,runJobStep,tickRunner,runnerStatus} from '../lib/jobs.mjs';
 import {restoreBackup} from '../lib/backup.mjs';
+import {planningRange,validatePlanningDraft} from '../lib/planning.mjs';
+import {contractPrompt} from '../lib/prompts.mjs';
 const migration=readFileSync(new URL('../drizzle/0000_rare_tenebrous.sql',import.meta.url),'utf8');
 function db(file=':memory:') {
   const conn=new DatabaseSync(file);if(!conn.prepare("SELECT name FROM sqlite_master WHERE name='records'").get())conn.exec(migration.replaceAll('--> statement-breakpoint',''));
@@ -59,3 +61,61 @@ test('云端架构或正式质量审核失败，保留正文并阻止后章',asy
 test('未来大纲可保存版本、进入提示词和备份；已开始合同不可覆盖',async()=>{const s=fresh(),b=await book(s);const c=await writeOne(s,b);const current=await s.get(b.id),contracts=structuredClone(current.plan.contracts);contracts[1].goal='TEST ONLY: 从调查转向交易';const saved=await savePlan(s,{id:b.id,revision:current.revision,contracts,arcs:current.plan.arcs,guidance:'TEST ONLY: 未来阶段必须承担真实代价'});assert.equal(saved.planRevision,2);assert.equal(saved.guidanceFromChapter,2);assert.equal((await s.get(c.id)).content,c.content);assert.equal((await s.list('planVersion',b.id)).length,1);let prompt='';await step(s,b.id,'',async(...a)=>{prompt=a[3];return fixture(...a);});assert.match(prompt,/未来阶段必须承担真实代价/);const now=await s.get(b.id),bad=structuredClone(now.plan.contracts);bad[0].goal='不能覆盖历史';await assert.rejects(savePlan(s,{id:b.id,revision:now.revision,contracts:bad,arcs:now.plan.arcs,guidance:''}),/已经开始/);const backup={format:'novel-factory-backup-v1',book:now,chapters:await s.list('chapter',b.id),versions:await s.list('version',b.id),planVersions:await s.list('planVersion',b.id)};const restored=await restoreBackup(s,backup,crypto.randomUUID());assert.equal(restored.planRevision,2);assert.equal((await s.list('planVersion',restored.id)).length,1);assert.equal(restored.status,'paused');});
 test('云端活动及未保存检查点禁止改大纲；他人不能启动或编辑本书',async()=>{const s=fresh(),b=await book(s),secret=await configured(s);await step(s,b.id,'',fixture);const current=await s.get(b.id),input={id:b.id,revision:current.revision,contracts:current.plan.contracts,arcs:current.plan.arcs,guidance:''};await startJob(s,b.id,3);await assert.rejects(savePlan(s,input),/先暂停/);const other=new Store(s.db,'other-user');await assert.rejects(startJob(other,b.id,3),/作品不存在/);await assert.rejects(savePlan(other,input),/尚未完成/);await pauseJob(s,b.id);const j=await s.get(b.id+':job');await s.save(j,{...j,lease:{token:'still-in-flight',until:Date.now()+10000}});await assert.rejects(savePlan(s,{...input,revision:(await s.get(b.id)).revision}),/先暂停/);});
 test('崩溃后过期调用标为费用不确定，不退还预留或再次调用模型',async()=>{const s=fresh();await s.db.prepare('INSERT INTO calls (id,owner,book,month,amount,status,data,created) VALUES (?,?,?,?,?,?,?,?)').bind('dead-call',s.owner,'dead-book','2026-10',123456,'reserved','{}',Date.now()-160000).run();let invoked=0;await tickRunner(s.db,'',()=>{invoked++;});const c=await s.cost('dead-book');assert.equal(c.calls[0].status,'uncertain');assert.equal(c.total,.123456);assert.equal(invoked,0);});
+
+// V0.3 planning fixtures remain synthetic; no supplier or fiction quality claim.
+async function batchedFixture(store,cfg,b,prompt,role,...rest){
+  if(role==='plan_batch'){const {start,end}=planningRange(b.planningDraft);return {contracts:Array.from({length:end-start+1},(_,i)=>{const number=start+i;return {number,title:'TEST ONLY '+number,goal:'目标'+number,cause:'因果'+number,conflict:'冲突'+number,method:'手段'+number,consequence:'后果'+number,emotion:'体验'+number,hook:'问题'+number};})};}
+  return fixture(store,cfg,b,prompt,role,...rest);
+}
+test('100章规划先保存骨架，再10章一批，全书计划完整前不创建正文',async()=>{
+  const s=fresh(),b=await book(s,9000,100),roles=[];
+  const invoke=async(...a)=>{roles.push(a[4]);return batchedFixture(...a);};
+  const first=await step(s,b.id,'',invoke);assert.equal(first.phase,'plan_outline');assert.equal(first.book.plan,null);assert.equal(first.book.planningDraft.contracts.length,0);
+  for(let i=1;i<=10;i++){const r=await step(s,b.id,'',invoke);assert.equal((await s.list('chapter',b.id)).length,0);if(i<10){assert.equal(r.phase,'plan_batch');assert.equal(r.book.planningDraft.contracts.length,i*10);await validatePlanningDraft(r.book.planningDraft,100);}else{assert.equal(r.phase,'plan');assert.equal(r.book.plan.contracts.length,100);assert.equal(r.book.planningDraft,null);}}
+  assert.equal(roles.filter(r=>r==='plan').length,1);assert.equal(roles.filter(r=>r==='plan_batch').length,10);
+  await step(s,b.id,'',invoke);assert.equal((await s.list('chapter',b.id))[0].status,'writing');assert.equal(roles.at(-1),'contract');
+});
+test('300章分批规划不会要求单次输出300项；最后不足10章按实际范围保存',async()=>{
+  for(const total of [300,23]){const s=fresh(),b=await book(s,1000,total);let prompt='';await step(s,b.id,'',async(...a)=>{prompt=a[3];return batchedFixture(...a);});assert.match(prompt,/不输出逐章contracts/);for(let i=0;i<Math.ceil(total/10);i++)await step(s,b.id,'',batchedFixture);const saved=await s.get(b.id);assert.equal(saved.plan.contracts.length,total);assert.equal(saved.plan.contracts.at(-1).number,total);}
+  const spec=callSpec(defaults,'TEST ONLY','plan_batch');assert.equal(spec.maxTokens,6000);assert.equal(spec.model,defaults.model);
+});
+test('规划途中数据库重开，不重复骨架或已保存批次',async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'novel-planning-')),path=join(dir,'test.sqlite');let reopened;
+  try{const d=db(path),s=new Store(d,'test-owner'),b=await book(s,9000,100);for(let i=0;i<3;i++)await step(s,b.id,'',batchedFixture);const before=(await s.get(b.id)).planningDraft;assert.equal(before.contracts.length,20);d.conn.close();reopened=db(path);const restored=new Store(reopened,'test-owner');let prompt='';await step(restored,b.id,'',async(...a)=>{assert.equal(a[4],'plan_batch');prompt=a[3];return batchedFixture(...a);});const after=(await restored.get(b.id)).planningDraft;assert.equal(after.contracts.length,30);assert.deepEqual(after.contracts.slice(0,20),before.contracts);assert.deepEqual(after.outline,before.outline);assert.match(prompt,/第21到30章/);}finally{reopened?.conn.close();rmSync(dir,{recursive:true});}
+});
+test('缺失/越界批次和不连续阶段拒绝提交，不覆盖已经保存的规划',async()=>{
+  const s=fresh(),b=await book(s,1000,23);await assert.rejects(step(s,b.id,'',async(...a)=>{const p=await batchedFixture(...a);p.arcs[1].start=9;return p;}),/阶段范围/);assert.equal((await s.get(b.id)).planningDraft,undefined);
+  await step(s,b.id,'',batchedFixture);await step(s,b.id,'',batchedFixture);const before=(await s.get(b.id)).planningDraft;
+  for(const damage of ['missing','range']){await assert.rejects(step(s,b.id,'',async(...a)=>{const r=await batchedFixture(...a);if(damage==='missing')r.contracts.pop();else r.contracts[0].number=1;return r;}),/本批章节/);assert.deepEqual((await s.get(b.id)).planningDraft,before);}
+  const record=await s.get(b.id),corrupt=structuredClone(record.planningDraft);corrupt.contracts[0].goal='CORRUPTED TEST ONLY';await s.save(record,{...record,planningDraft:corrupt});let calls=0;await assert.rejects(step(s,b.id,'',async()=>{calls++;}),/校验失败/);assert.equal(calls,0);
+});
+test('暂停中的规划最多保存本批，后续云端不再请求；恢复沿用检查点',async()=>{
+  const s=fresh(),b=await book(s,1000,100),secret=await configured(s);await startJob(s,b.id,3);await tickRunner(s.db,secret,batchedFixture);let release;const gate=new Promise(r=>release=r);
+  const pending=runJobStep(s,b.id,secret,async(...a)=>{await gate;return batchedFixture(...a);});await new Promise(r=>setTimeout(r,20));await pauseJob(s,b.id);release();await pending;
+  assert.equal((await s.get(b.id)).status,'paused');assert.equal((await s.get(b.id)).planningDraft.contracts.length,10);let calls=0;await tickRunner(s.db,secret,async()=>{calls++;});assert.equal(calls,0);
+  await startJob(s,b.id,3);await tickRunner(s.db,secret,batchedFixture);assert.equal((await s.get(b.id)).planningDraft.contracts.length,20);
+});
+test('未完成规划进入备份，恢复后默认暂停；损坏规划在创建副本前拒绝',async()=>{
+  const s=fresh(),b=await book(s,9000,100);for(let i=0;i<3;i++)await step(s,b.id,'',batchedFixture);const backup={format:'novel-factory-backup-v1',book:await s.get(b.id),chapters:[],versions:[]};
+  const restored=await restoreBackup(s,backup,crypto.randomUUID());assert.equal(restored.status,'paused');assert.deepEqual(restored.planningDraft,backup.book.planningDraft);await startJob(s,restored.id,3).catch(e=>assert.match(e.message,/请先保存/));
+  await configured(s);await startJob(s,restored.id,3);await runJobStep(s,restored.id,'',batchedFixture);assert.equal((await s.get(restored.id)).planningDraft.contracts.length,30);
+  const damaged=structuredClone(backup);damaged.book.planningDraft.contracts[0].title='CORRUPTED TEST ONLY';await assert.rejects(restoreBackup(s,damaged,crypto.randomUUID()),/校验失败/);assert.equal((await s.list('book')).length,2);
+});
+test('旧版完整大纲直接续写，不重做选题或分批计划',async()=>{
+  const s=fresh(),b=await book(s,1000,100);await s.save(b,{...b,plan:plan(100),status:'ready'});let role;await step(s,b.id,'',async(...a)=>{role=a[4];return fixture(...a);});assert.equal(role,'contract');assert.equal((await s.list('chapter',b.id)).length,1);assert.equal((await s.get(b.id)).planningDraft,undefined);
+});
+test('分批规划仍受预算和费用授权门控制，失败后不无限请求或丢失前批',async()=>{
+  const s=fresh(),b=await book(s,1000,100),secret=await configured(s,{taskLimit:.000001});await step(s,b.id,'',batchedFixture);const before=(await s.get(b.id)).planningDraft;await startJob(s,b.id,3);let calls=0;
+  await tickRunner(s.db,secret,(...a)=>modelCall(...a,async()=>{calls++;throw new Error('HTTP should not be reached');}));assert.equal((await s.get(b.id+':job')).status,'blocked');assert.deepEqual((await s.get(b.id)).planningDraft,before);assert.equal(calls,0);await tickRunner(s.db,secret,async()=>{calls++;});assert.equal(calls,0);
+});
+test('长篇场景规划不反复发送300章全部合同，保留圣经、已锁事实与相邻计划',()=>{
+  const p=plan(300);p.contracts[299].goal='DISTANT CONTRACT TEST ONLY';p.bible.ending='CANONICAL ENDING TEST ONLY';
+  const prompt=contractPrompt({plan:p,targetWords:9000},{facts:{known:'LOCKED FACT TEST ONLY'},ledger:[],foreshadowing:[]},p.contracts[99]);
+  assert.ok(!prompt.includes('DISTANT CONTRACT TEST ONLY'));assert.ok(prompt.includes('CANONICAL ENDING TEST ONLY'));assert.ok(prompt.includes('LOCKED FACT TEST ONLY'));assert.ok(prompt.includes(p.contracts[100].goal));assert.ok(prompt.length<JSON.stringify(p).length);
+});
+test('预算修改不自动开启费用或重启任务；他人、过期版本与在途检查点不能修改',async()=>{
+  const s=fresh(),b=await book(s),secret=await configured(s);await startJob(s,b.id,3);await assert.rejects(setBookBudget(s,{id:b.id,revision:b.revision,budget:40}),/先暂停/);await pauseJob(s,b.id);const current=await s.get(b.id);
+  await assert.rejects(setBookBudget(s,{id:b.id,revision:b.revision,budget:40}),/版本已变化/);const other=new Store(s.db,'other-user');await assert.rejects(setBookBudget(other,{id:b.id,revision:current.revision,budget:40}),/作品不存在/);
+  await settings(s,{spendEnabled:false},secret);const saved=await setBookBudget(s,{id:b.id,revision:current.revision,budget:40});assert.equal(saved.budget,40);assert.equal(saved.status,'paused');assert.equal((await s.get(b.id+':job')).status,'paused');assert.equal((await config(s)).spendEnabled,false);
+  await assert.rejects(setBookBudget(s,{id:b.id,revision:saved.revision,budget:-1}),/0到10000/);await s.create('chapter',{number:1,lease:{until:Date.now()+10000}},b.id);await assert.rejects(setBookBudget(s,{id:b.id,revision:saved.revision,budget:50}),/尚未完成/);
+});

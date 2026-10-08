@@ -1,25 +1,22 @@
 # 继续开发入口
 
-先读取README、PROJECT_STATUS、DEVELOPMENT_LOG、ARCHITECTURE、本文件以及GitHub main最新提交，不覆盖既有测试通过的代码。GitHub是进度事实源，托管source文档可能是发布前快照。
+先读取GitHub main的README、PROJECT_STATUS、DEVELOPMENT_LOG、ARCHITECTURE、本文件和最近提交；主仓1464356758/xiaoshuoRJ是进度事实源。不能从零覆盖，托管source文档可能是发布前快照。
 
-## 已完成交付
+## V0.3本轮
 
-V0.2私有线上App：https://ai-novel-factory.qq1464356758.chatgpt.site。PWA安装入口、豆包和七家模型教程、持久job、未来大纲控制及历史已实现。33项SQLite/协议/故障测试、TypeScript、生产构建、14项Worker HTTP均通过。代码阶段GitHub commit 73d3a8dfe8d22f9e80c8cda36b42ed893a2425f2；部署source a716ac09afb00181af181e78d3e246e7e8fe22e8。恢复读main最新记录。
+分批长篇规划、规划进度/骨架预览、启动条件提示、单书预算调整已完成。43项SQLite/协议/故障测试、TypeScript、生产构建和18项Worker HTTP均通过，测试为合成夹具。尚在发布阶段，实际发布结果由开发记录确认。
 
-实际托管writer POST/GET心跳已通过，无凭据访问403；没有活动job，验证未请求模型。每小时调度已关联启用Automation_a63056dd2fac8191921bbe53b2eb5a07，Asia/Shanghai，从2026-10-08 19:00起，最多80检查点/20分钟。首次定时发生仍待观察；不要重复创建或无授权恢复用户暂停的调度。
+既有私有Site appgprj_6ac7543090988191a801103993b08416，网址 https://ai-novel-factory.qq1464356758.chatgpt.site。已有每小时任务Automation_a63056dd2fac8191921bbe53b2eb5a07，实际心跳ticks=2/3已读回，当时没有活动小说job、没有模型请求。不要新建Site、重复创建调度或替用户恢复暂停任务。
 
-## 接着做
+## 恢复后
 
-1. 用户只需在软件模型设置中输入自己的API Key、当前模型ID、核实价格、决定预算并授权调用；不要从聊天索要密钥，不代购服务。当前真实API与文学案例受缺少凭据阻塞。
-2. 用户有可用配置后，运行真实100章规划与开篇三章，保留用量、费用、正式审核证据和返修。文学质量、平台匹配、签约竞争力必须独立验证，不能用合成夹具代替。
-3. 确认首次定时运行记录/心跳。依docs/CLOUD_RUNNER.md使用原Site服务边界；API密钥只在服务器，平台凭据只在内存和隐藏stdin。任务错误或质量/费用门阻塞时不自动重启。
-4. 手机实机安装、暂停、编辑大纲、正文和导出流程验证。当前环境无control-browser技能，浏览器及实机未实测，不虚报。
-5. 补齐八平台官方AI/投稿/福利/独家条件；未知项保留，不用过期攻略伪造数字。
-6. 后续扩展：跨供应商角色配置、分钟级队列、手机推送、整书修订分支、本地模型。
+1. 先确认本轮GitHub提交与实际V0.3私有部署是否成功；若发布中断，恢复同一Site与源码，不重复保存已经返回saved_version_id的版本。
+2. 用户在软件模型设置安全填写Key、当前模型ID、核实价格和费用上限，自行确认费用。不得从聊天索要密钥或替用户开费。
+3. 配置后进行真实100章规划与开篇三章。新规划先存圣经/阶段，再每批10章；全部完成前没有正文。保存用量、费用、全文审核证据，不能用合成夹具代替。
+4. 在手机验证安装、退出后进度、暂停、未来大纲、预算、编辑与导出。当前缺少control-browser，未进行浏览器及实机操作，不虚报。
+5. 补齐八平台官方AI/投稿/福利/独家条件，未知项保留。其后考虑跨供应商配置、分钟级队列、整书修订分支和本地模型。
 
-## 部署和测试
-
-保留.openai/hosting.json既有私有Site身份与受众，不新建、不公开。托管CLOUD_RUNNER_ENABLED=1和加密secret已应用，环境revision 2。
+## 检查
 
 `node --test tests/engine.test.mjs`
 
@@ -29,4 +26,4 @@ V0.2私有线上App：https://ai-novel-factory.qq1464356758.chatgpt.site。PWA�
 
 `node scripts/verify-worker.mjs`
 
-复用现有records schema，无新迁移；既有D1迁移不可改写。公开GitHub不能上传正文、数据库、API或平台凭据。只有实际代码改动或未决失败才需重跑相关检查；托管服务与调度成功不代替真实模型验收。
+复用records schema，无新迁移；既有D1迁移不可改写。公开GitHub只存代码、教程与安全状态，不能存正文、数据库、用户反馈敏感附件或任何凭据。仅有源码变化或未解决错误再跑相关检查。真实模型、文学质量、实机体验和签约都仍是独立验收项。

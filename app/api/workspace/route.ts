@@ -1,6 +1,6 @@
 import {env} from 'cloudflare:workers';
 import {Store} from '@/lib/store.mjs';
-import {snapshot,createBook,settings,step,saveChapter,unlockChapter,reviseChapter,exportBook,savePlan,testConnection} from '@/lib/engine.mjs';
+import {snapshot,createBook,settings,step,saveChapter,unlockChapter,reviseChapter,exportBook,savePlan,testConnection,setBookBudget} from '@/lib/engine.mjs';
 import {startJob,pauseJob,runJobStep,runnerStatus} from '@/lib/jobs.mjs';
 import {hash} from '@/lib/store.mjs';
 import {restoreBackup} from '@/lib/backup.mjs';
@@ -34,6 +34,7 @@ export async function POST(request:Request) {
     else if(x.action==='startJob'){if(!runnerEnabled)throw new Error('云端调度尚未启用，请联系维护者');result=await startJob(store,x.id,x.target);}
     else if(x.action==='runJob')result=await runJobStep(store,x.id,secret);
     else if(x.action==='plan')result=await savePlan(store,x.input);
+    else if(x.action==='bookBudget')result=await setBookBudget(store,x.input);
     else if(x.action==='testConnection')result=await testConnection(store,secret);
     else if(x.action==='save')result=await saveChapter(store,x.input);
     else if(x.action==='unlock')result=await unlockChapter(store,x.id);
