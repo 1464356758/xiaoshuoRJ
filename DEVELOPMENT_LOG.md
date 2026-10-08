@@ -30,3 +30,9 @@
 - 云端调度最高每小时，使用Sites既有私有身份和服务边界；代码与执行脚本已完成，托管writer及schedule需要在新版本发布后验证并登记。
 
 - V0.2实际构建Worker HTTP集成14/14通过：教程路由、云端配置/授权门、服务心跳持久化、参数/浏览器拒绝、豆包密钥脱敏及连接测试费用拒绝。没有调用真实模型。
+
+- GitHub源码及教程已提交main：73d3a8dfe8d22f9e80c8cda36b42ed893a2425f2。
+- V0.2私有部署实际succeeded，source a716ac09afb00181af181e78d3e246e7e8fe22e8；网址保持 https://ai-novel-factory.qq1464356758.chatgpt.site，环境revision 2。
+- 实际托管writer用服务凭据POST成功：idle、activeJobs=0，心跳2026-10-08T10:07:09.303Z；另一GET读回200/ticks=1同一心跳，无凭据GET403。没有请求模型或创建虚构小说。
+- 从GitHub读取已提交runner脚本及执行说明成功，验证云端任务可检索恢复；凭据没有进入源码、参数文件或日志。
+- Sites create_schedule实际成功，并由get_site确认关联启用Automation_a63056dd2fac8191921bbe53b2eb5a07；Asia/Shanghai，2026-10-08 19:00起每小时分批运行。定时首次发生尚未验证；不把创建调度说成已产出小说。

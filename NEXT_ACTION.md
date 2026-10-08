@@ -1,28 +1,25 @@
 # 继续开发入口
 
-先读取README、PROJECT_STATUS、DEVELOPMENT_LOG、ARCHITECTURE、本文件以及GitHub main最新提交，不覆盖既有测试通过的代码。
+先读取README、PROJECT_STATUS、DEVELOPMENT_LOG、ARCHITECTURE、本文件以及GitHub main最新提交，不覆盖既有测试通过的代码。GitHub是进度事实源，托管source文档可能是发布前快照。
 
-## 当前中断点
+## 已完成交付
 
-V0.2已完成PWA安装、豆包、教程、云端job、未来大纲编辑与历史；33项单元/SQLite故障测试、TypeScript检查和生产构建通过。构建Worker HTTP集成14项通过。源码在 `/workspace/sites/novel-factory`，Site身份在 `.openai/hosting.json`，已打开既有source aefdcb2cd598354d8cc8be07bed0128d2fae66ae。不能新建Site。
+V0.2私有线上App：https://ai-novel-factory.qq1464356758.chatgpt.site。PWA安装入口、豆包和七家模型教程、持久job、未来大纲控制及历史已实现。33项SQLite/协议/故障测试、TypeScript、生产构建、14项Worker HTTP均通过。代码阶段GitHub commit 73d3a8dfe8d22f9e80c8cda36b42ed893a2425f2；部署source a716ac09afb00181af181e78d3e246e7e8fe22e8。恢复读main最新记录。
 
-## 紧接着做
+实际托管writer POST/GET心跳已通过，无凭据访问403；没有活动job，验证未请求模型。每小时调度已关联启用Automation_a63056dd2fac8191921bbe53b2eb5a07，Asia/Shanghai，从2026-10-08 19:00起，最多80检查点/20分钟。首次定时发生仍待观察；不要重复创建或无授权恢复用户暂停的调度。
 
-1. 本次14项真实构建Worker HTTP检查已通过；不需要无理由重跑，不冒充浏览器。
-2. 将改版源码、教程和状态提交GitHub main，使用最新head expected_sha；不强推。
-3. 通过Sites workflow打包并私有部署V0.2，原受众不变。CLOUD_RUNNER_ENABLED=1已写托管环境，部署后生效；模型API尚未配置。
-4. 依 `docs/CLOUD_RUNNER.md` 真正使用get_site服务凭据调用writer并GET读取心跳；令牌只在内存和隐藏stdin，不能写入文件或命令参数。空任务验证不请求模型。
-5. 再用Sites create_schedule登记Asia/Shanghai每小时批次（最多80检查点/20分钟）。先读取已有automations防止重复，创建成功与实际运行分开记录。若任一路径不可用，保留代码与准确阻塞，不能宣称后台已接通。
-6. 将部署成功URL、writer验证结果、调度状态及最终GitHub提交写回开发文档。
+## 接着做
 
-## 完成此次交付后的下一步
+1. 用户只需在软件模型设置中输入自己的API Key、当前模型ID、核实价格、决定预算并授权调用；不要从聊天索要密钥，不代购服务。当前真实API与文学案例受缺少凭据阻塞。
+2. 用户有可用配置后，运行真实100章规划与开篇三章，保留用量、费用、正式审核证据和返修。文学质量、平台匹配、签约竞争力必须独立验证，不能用合成夹具代替。
+3. 确认首次定时运行记录/心跳。依docs/CLOUD_RUNNER.md使用原Site服务边界；API密钥只在服务器，平台凭据只在内存和隐藏stdin。任务错误或质量/费用门阻塞时不自动重启。
+4. 手机实机安装、暂停、编辑大纲、正文和导出流程验证。当前环境无control-browser技能，浏览器及实机未实测，不虚报。
+5. 补齐八平台官方AI/投稿/福利/独家条件；未知项保留，不用过期攻略伪造数字。
+6. 后续扩展：跨供应商角色配置、分钟级队列、手机推送、整书修订分支、本地模型。
 
-- 用户只需在软件安全输入框配置自己的API Key、当前模型ID、已核实单价并决定费用上限；不要从聊天索要明文，不开通付费服务。
-- 可用模型后，运行100章故事规划及真实开篇三章，保留用量、费用、审核证据和返修；文学质量验收不能用合成数据代替。
-- 手机浏览器安装、暂停/大纲/编辑流程真实操作验证；当前环境缺control-browser技能仍未实测。
-- 完善八平台官方政策与投稿条件；跨供应商模型、手机推送、整书修订分支后续实现。
+## 部署和测试
 
-## 验证入口
+保留.openai/hosting.json既有私有Site身份与受众，不新建、不公开。托管CLOUD_RUNNER_ENABLED=1和加密secret已应用，环境revision 2。
 
 `node --test tests/engine.test.mjs`
 
@@ -32,4 +29,4 @@ V0.2已完成PWA安装、豆包、教程、云端job、未来大纲编辑与历�
 
 `node scripts/verify-worker.mjs`
 
-此改版复用现有records schema，无需新迁移；既有D1迁移不可改写。
+复用现有records schema，无新迁移；既有D1迁移不可改写。公开GitHub不能上传正文、数据库、API或平台凭据。只有实际代码改动或未决失败才需重跑相关检查；托管服务与调度成功不代替真实模型验收。
