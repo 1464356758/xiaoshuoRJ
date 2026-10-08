@@ -4,7 +4,7 @@
 
 ## V0.3本轮
 
-分批长篇规划、规划进度/骨架预览、启动条件提示、单书预算调整已完成。43项SQLite/协议/故障测试、TypeScript、生产构建和18项Worker HTTP均通过，测试为合成夹具。尚在发布阶段，实际发布结果由开发记录确认。
+分批长篇规划、规划进度/骨架预览、启动条件提示、单书预算调整已完成。43项SQLite/协议/故障测试、TypeScript、生产构建和18项Worker HTTP均通过，测试为合成夹具。V0.3私有发布已成功，get_site确认线上版本3；实际source和部署结果见开发记录。
 
 既有私有Site appgprj_6ac7543090988191a801103993b08416，网址 https://ai-novel-factory.qq1464356758.chatgpt.site。已有每小时任务Automation_a63056dd2fac8191921bbe53b2eb5a07，实际心跳ticks=2/3已读回，当时没有活动小说job、没有模型请求。不要新建Site、重复创建调度或替用户恢复暂停任务。
 
