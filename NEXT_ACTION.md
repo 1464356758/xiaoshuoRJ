@@ -1,3 +1,5 @@
+已上线私有软件：https://ai-novel-factory.qq1464356758.chatgpt.site
+
 # 继续开发入口
 
 先读取本文件、PROJECT_STATUS.md、DEVELOPMENT_LOG.md、ARCHITECTURE.md、README.md以及main最近提交；检查现有工作而不是重建。
@@ -22,3 +24,5 @@
 新D1 schema改动先`pnpm db:generate`，核验SQL再构建和发布。已应用迁移不可改写。
 
 源码写GitHub main须保护已有历史并先读取最新head；可用GitHub create_tree/create_commit/update_ref（expected_sha）提交，不能强推。生产数据库、正文及任何凭据禁止进入公开仓库。
+
+当前唯一需要用户的操作：进入模型设置，输入自己的API密钥、核实人民币单价和额度，并自主决定是否开启费用调用。真实小说与签约质量验证必须在这之后进行。无需用户处理普通技术设计。
