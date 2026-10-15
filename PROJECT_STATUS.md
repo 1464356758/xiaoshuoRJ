@@ -24,7 +24,7 @@
 
 原Site：appgprj_6ac7543090988191a801103993b08416
 https://ai-novel-factory.qq1464356758.chatgpt.site
-2026-10-15重新get_site确认active、本人owner、仅一名owner受众、无共享组/外部访客/编辑。当前线上版本3；V0.4待本轮私有发布。
+2026-10-15重新get_site确认active、本人owner、仅一名owner受众、无共享组/外部访客/编辑。V0.4实际私有发布已成功，线上版本4；部署与来源见文末。
 
 既有Automation_a63056dd2fac8191921bbe53b2eb5a07已暂停。本次未恢复、未新建调度、未替用户开费或启动创作。自动审批曾阻止可能触发费用的服务调用，执行许可尚待处理。软件明确显示过期心跳，提供由本人点击启动的前台连续执行。
 
@@ -33,3 +33,14 @@ https://ai-novel-factory.qq1464356758.chatgpt.site
 ## 继续验收
 
 本人在软件核对实际模型ID、单价、预算并决定费用授权；先新增3章，保持页面打开完成前台批次，在验收中心查看实际稿件和证据。不得宣称已经签约、拿到保底或全书质量已达标。APK为混合客户端，不宣称离线原生写作引擎。
+
+
+## V0.4实际私有发布结果
+
+2026-10-15T03:11:21.257264+00:00：原生私有发布 succeeded；版本4；source 919d573e5bbdc9884eb821907fee83caee9d0f07；deployment appgdep_6ad04445f974819188e1090d38997f75；version appgprj_6ac7543090988191a801103993b08416~appgver_ad017467fd048191b5138faf95c0c48e；环境revision 2。get_site发布后再次确认active、本人owner、仅一名owner受众，无组、外部访客或编辑。网址保持 https://ai-novel-factory.qq1464356758.chatgpt.site。
+
+V0.4源码和修复已提交GitHub main：d2ad891b84b6769bfccc71e73c3d6ecfb223c96b，实际回读一致。56项程序测试、24项构建Worker HTTP、TypeScript与生产构建均通过；APK编译、签名和包信息校验通过。APK及私有更新签名备份已保存为本人文件；不含访问令牌，签名材料未进入源码或部署包。部署包92文件，扫描无密钥文件/数据库。
+
+真实供应商响应、真实三章文学质量和手机交互未验收；不得将合成测试或发布成功当作签约/保底证据。当前managed-linux环境没有control-browser技能；按 Sites SKILL.md 要求“skip browser QA”，未启动或绕过浏览器预览路径。当前使用的规范：skill://plugin_connector_1p_689987207de08191979cf68eca2941c6/sites/SKILL.md。
+
+原后台调度仍暂停，本次未开费、未启动小说job、未恢复暂停调度、未发布小说、未签约或授权版权。用户可在软件内确认模型与预算后，使用「在此页一键连续执行」验证实际三章。
