@@ -14,7 +14,7 @@
 
 ## 已验证及未验证
 
-86/86真实SQLite、协议与故障测试通过。最终TypeScript检查、生产构建与29/29实际构建Worker HTTP检查均通过；发布结果随后追加。没有请求真实模型、没有读取私人稿件、没有启动任何真实小说任务。
+86/86真实SQLite、协议与故障测试通过。最终TypeScript检查、生产构建与29/29实际构建Worker HTTP检查均通过；私有发布已经成功，结果见下方。没有请求真实模型、没有读取私人稿件、没有启动任何真实小说任务。
 
 安卓仍为已交付的签名NovelFactory-0.4.0.apk，安全系统浏览器承载原Site，升级工作台后使用新内容；未重打包APK，未做手机实机操作。当前环境没有control-browser，按Sites技能跳过浏览器QA，不启动或绕过预览。
 
@@ -25,8 +25,14 @@
 Site：appgprj_6ac7543090988191a801103993b08416
 https://ai-novel-factory.qq1464356758.chatgpt.site
 
-本轮重新确认active、本人owner、仅一名owner受众、无共享组或外部访客。既有V0.4已于2026-10-15T03:11:21.257264Z发布成功：source919d573e5bbdc9884eb821907fee83caee9d0f07、版本4、deployment appgdep_6ad04445f974819188e1090d38997f75、环境revision2；V0.5待本轮发布登记。
+本轮重新确认active、本人owner、仅一名owner受众、无共享组或外部访客。既有V0.4已于2026-10-15T03:11:21.257264Z发布成功：source919d573e5bbdc9884eb821907fee83caee9d0f07、版本4、deployment appgdep_6ad04445f974819188e1090d38997f75、环境revision2；V0.5已实际发布到版本5，source5772f16ae6c9b8ea76ee1220965a4d73f31a3d3e，环境revision2。
 
 既有Automation_a63056dd2fac8191921bbe53b2eb5a07保持暂停，未新建/恢复调度。用户仍可本人点击前台连续执行。软件内GitHub模型工具仅只读固定公开开发资料，未接入托管写入授权；模型具备工具调用能力不等于获得GitHub权限。
 
 未开费、未提高预算/降低质量门、未重启阻塞任务、未发表小说、未签约或授权版权。
+
+## V0.5实际发布与源码
+
+2026-10-15T16:40:25.908553Z：V0.5私有发布succeeded；线上版本5；source 5772f16ae6c9b8ea76ee1220965a4d73f31a3d3e；deployment appgdep_6ad101ee51bc819199f62ee74b6b09e6；saved version appgprj_6ac7543090988191a801103993b08416~appgver_5e2b14edca8c8191b0accd60051a39eb；环境revision2。网址保持 https://ai-novel-factory.qq1464356758.chatgpt.site。发布后get_site确认active、本人owner、仅一名owner受众、无组/外部访客/编辑。
+
+GitHub实现提交26be2761fea3225af338f179a78693915258e5d4，已回读main一致。86项程序测试、29项构建Worker HTTP、TypeScript及生产构建全部通过。部署包91文件，已扫描无密钥文件/数据库/安卓签名材料。托管镜像文档是发布前快照；本文件与GitHub main最新日志记录实际发布结果，不需因此重复部署。

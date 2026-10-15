@@ -2,7 +2,7 @@
 
 读取README、PROJECT_STATUS、ARCHITECTURE、DEVELOPMENT_LOG、docs/WORKFLOW_V05_REVIEW.md、main与AGENTS；不得从零覆盖原Site/D1/密钥。先核对实际发布记录，避免重复保存同一版本。
 
-1. V0.5已通过86项程序测试、29项构建Worker HTTP、类型与生产构建。提交GitHub main并更新同一个owner-private Site；按真实返回值登记source/version/deployment。未成功不得写成已交付。
+1. V0.5已经私有发布至版本5，source5772f16ae6c9b8ea76ee1220965a4d73f31a3d3e，deployment appgdep_6ad101ee51bc819199f62ee74b6b09e6，环境revision2；GitHub实现提交26be2761fea3225af338f179a78693915258e5d4已回读确认。86项程序测试、29项构建Worker HTTP、类型与生产构建均通过。无需重复保存或部署。
 2. 真实供应商与文学质量仍待本人在软件核对三角色型号、单价、预算和费用授权后启动。开发验证不得擅自读取/使用保存的付费配置，不自动恢复后台调度。
 3. 第一轮只验证新增三章：记录任务书、实际旧稿检索、供应商响应、合格定稿万字成本、返修率及独立审稿与盲读意见。程序85分不是商业签约结论。
 4. 第二轮验证第4–10章因果/人物声音/伏笔与阶段门，再验证第11章滚动详纲。仅有开篇三章不能宣称长篇质量成立。
