@@ -15,6 +15,7 @@ import {openingGate,arcGate,openingFingerprint,submissionReadiness,submissionPac
 import {repositoryAssistant} from '../lib/model.mjs';
 import {executeGithubTool} from '../lib/github-tools.mjs';
 import {forkRevision} from '../lib/revisions.mjs';
+import {createReadContext} from '../lib/read-context.mjs';
 import {runForegroundBatch} from '../lib/foreground-runner.mjs';
 import {openingAudit} from '../lib/engine.mjs';
 import {contractPrompt} from '../lib/prompts.mjs';
@@ -144,3 +145,5 @@ test('阶段编辑声称通过但缺少逐章原文依据时仍拒绝',()=>{cons
 
 test('前台连续执行在暂停后不发下一次请求，也不自动重试不确定请求',async()=>{let calls=0,active=true;const result=await runForegroundBatch({request:async()=>{calls++;return {advanced:true,job:{status:'queued'}};},onUpdate:async()=>{active=false;},shouldContinue:()=>active});assert.equal(calls,1);assert.equal(result.status,'stopped');calls=0;await assert.rejects(runForegroundBatch({request:async()=>{calls++;throw new Error('network uncertain');},onUpdate:async()=>{},shouldContinue:()=>true}),/uncertain/);assert.equal(calls,1);});
 test('前台批次遵守80步及20分钟上限，等待租约最多6次，完成即停',async()=>{let calls=0;let r=await runForegroundBatch({request:async()=>{calls++;return {advanced:true,job:{status:'queued'}};},onUpdate:async()=>{},shouldContinue:()=>true,maxSteps:999,now:()=>0});assert.equal(calls,80);assert.equal(r.status,'batch_limit');calls=0;let clock=0;r=await runForegroundBatch({request:async()=>{calls++;clock+=600001;return {advanced:true,job:{status:'queued'}};},onUpdate:async()=>{},shouldContinue:()=>true,now:()=>clock,maxSeconds:9999});assert.equal(calls,2);calls=0;let waits=0;await runForegroundBatch({request:async()=>{calls++;return {advanced:false,reason:'waiting',job:{status:'waiting'}};},onUpdate:async()=>{},shouldContinue:()=>true,wait:async()=>{waits++;}});assert.equal(calls,6);assert.equal(waits,5);calls=0;await runForegroundBatch({request:async()=>{calls++;return {advanced:true,job:{status:'completed'}};},onUpdate:async()=>{},shouldContinue:()=>true});assert.equal(calls,1);});
+
+test('切换作品后拒绝旧书慢响应；旧轮询也不能取代新书正在进行的读取',()=>{const context=createReadContext(),initial=context.begin();assert.ok(context.accept(initial,'book-A'));const slowOld=context.begin('book-A');context.select('book-B');const current=context.begin('book-B');assert.equal(context.begin('book-A'),null);assert.equal(context.accept(slowOld,'book-A'),false);assert.equal(context.accept(current,'book-B'),true);const older=context.begin('book-B'),newer=context.begin('book-B');assert.equal(context.accept(older,'book-B'),false);assert.equal(context.accept(newer,'book-B'),true);});
