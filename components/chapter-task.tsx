@@ -1,0 +1,4 @@
+export default function ChapterTask({chapter}:any) {
+  const c=chapter?.contract;if(!c)return null;
+  return <section className="card"><details><summary>第{chapter.number}章 · 剧情任务书与返修依据</summary><p>承接：{c.entry||'旧版任务书未单列'}</p><p>行动原因：{c.cause||c.goal}</p><p>本章目标：{c.goal}</p><p>删除本章会损失：{c.deleteLoss}</p><ol>{c.scenes?.map((s:any,i:number)=><li key={i}><strong>场景{i+1}：{s.goal}</strong><p>阻碍：{s.conflict} · 选择：{s.choice} · 后果：{s.consequence}</p><p>知情边界：{s.knowledgeBoundary}</p></li>)}</ol>{c.schema===2&&<><p>必须发生：{(c.requiredDelta||[]).map((d:any)=>d.key+'：'+String(d.from)+' → '+String(d.to)).join('；')}</p><p>禁止变化：{(c.forbidden||[]).map((d:any)=>d.key+' → '+String(d.to)).join('；')||'以固定设定与知识边界为准'}</p></>}<p>结尾问题：{c.hook}</p>{chapter.repairDiagnosis&&<p className="negative">结构诊断：{chapter.repairDiagnosis}</p>}{chapter.lastRepair&&<p>最近返修：合并{chapter.lastRepair.patchCount}处，修改规模{chapter.lastRepair.changedCharacters}字符；原稿已保留。</p>}</details></section>;
+}

@@ -43,12 +43,12 @@ export async function POST(request:Request) {
     else if(x.action==='forkRevision')result=await forkRevision(store,x.id,x.fromChapter,x.key);
     else if(x.action==='githubAssist'){const c=await config(store);let b=x.id?await store.get(x.id):null;if(b&&b.kind!=='book')throw new Error('作品不存在');if(x.id&&!b)throw new Error('作品不存在');b ||= {id:store.owner+':repository-assistant',budget:Math.min(c.bookLimit,c.taskLimit)};result=await repositoryAssistant(store,c,b,x.question,secret);}
     else if(x.action==='openingAudit')result=await openingAudit(store,x.id,secret);
-    else if(x.action==='testConnection')result=await testConnection(store,secret);
+    else if(x.action==='testConnection')result=await testConnection(store,secret,undefined,x.role||'planner');
     else if(x.action==='save')result=await saveChapter(store,x.input);
     else if(x.action==='unlock')result=await unlockChapter(store,x.id);
     else if(x.action==='revise')result=await reviseChapter(store,x.input,secret);
     else if(x.action==='pause')result=await pauseJob(store,x.id);
-    else if(x.action==='resume') {const b=await store.get(x.id);if(!b||b.kind!=='book')throw new Error('作品不存在');result=await store.save(b,{...b,status:b.plan?'ready':'planning'});}
+    else if(x.action==='resume') {const b=await store.get(x.id);if(!b||b.kind!=='book')throw new Error('作品不存在');if(b.restoreComplete===false)throw new Error('请先完成备份恢复');if(b.revisionComplete===false)throw new Error('修订副本建立尚未完成，请从原作品重新建立副本');result=await store.save(b,{...b,status:b.plan?'ready':'planning'});}
     else if(['submission','income','expense','rule'].includes(x.action)) {
       const d=x.input;if(x.action==='submission'){const b=await store.get(d.bookId);if(!b)throw new Error('作品不存在');if((await store.list('submission')).some((s:any)=>s.bookId===d.bookId&&s.exclusive&&s.status==='signed'&&s.platform!==d.platform))throw new Error('已有独家签约记录，禁止登记其他平台新投稿');if(!['draft','submitted','rejected','signed','revising'].includes(d.status))throw new Error('投稿状态无效');if(d.status==='signed'&&d.contractType==='guarantee'&&(!Number.isFinite(d.guaranteeRate)||d.guaranteeRate<=0||!d.contractEvidence||d.contractEvidence.trim().length<10))throw new Error('保底签约记录需录入有效单价及合同依据');}
       if(['income','expense'].includes(x.action)){if(!Number.isFinite(d.amount)||d.amount<0||d.amount>1e8)throw new Error('金额无效');if(x.action==='income'&&!['estimated','conditional','confirmed','received'].includes(d.status))throw new Error('收入状态无效');if(x.action==='income'&&['confirmed','received'].includes(d.status)&&(!d.evidence||d.evidence.trim().length<5))throw new Error('平台确认或到账收入需要真实依据');}
