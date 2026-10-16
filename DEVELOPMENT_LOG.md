@@ -111,3 +111,11 @@ V0.4源码和修复已提交GitHub main：d2ad891b84b6769bfccc71e73c3d6ecfb223c9
 - 故事控制台展示真实定稿/人物证据/承诺期限/未来三章/旧稿比较/评分轨迹，空记录不伪造；只读数据复用现有snapshot。
 - 113/113 SQLite、协议、费用隔离与故障测试、TypeScript、生产构建与32/32实际构建Worker HTTP全部通过。三章合成流程维持11个原角色请求，不等同于文学样章。
 - 未读取私人正文/付费配置、未实际模型调用、未开费或换模型、未启动/恢复任务、未发表/签约/授权。当前无control-browser，按Sites技能跳过浏览器QA。
+
+## V0.6实际私有发布结果
+
+2026-10-16T03:04:21.386971Z：V0.6私有发布succeeded，线上版本6，source 180141c6ce390971851239a92aea4bd37f582f72，deployment appgdep_6ad194203d6081919c4cfc8e9da40eb2，saved version appgprj_6ac7543090988191a801103993b08416~appgver_ff255366e4788191b306dae89abc62e1，环境revision2。网址保持 https://ai-novel-factory.qq1464356758.chatgpt.site；发布后get_site重新确认active、本人owner、仅一名owner受众、无组/外部访客，原调度仍暂停。
+
+GitHub实现提交249f6992d6bd0b54abd6742e285e1798990c85f9，已回读确认。113/113 SQLite/协议/故障测试、32/32实际构建Worker HTTP、TypeScript和生产构建全部通过。新接口检查覆盖新书保护不能由客户参数关闭、故事面板只读/owner隔离/无模型请求、恢复协议类型。部署包73文件，SHA-256 6991755be58535998b82f661193c403cdcd6f204ab129a2a4950afff17ab47d5，扫描无密钥文件/数据库/APK/签名材料。
+
+本轮未读取私人稿件/付费配置、未调用真实模型或开启费用、未更换保存模型、未启动创作/恢复调度、未降低标准、未发表/签约/授权版权。安卓0.4混合入口继续使用同一Site，未重打包。真实文学质量、供应商长响应和手机/浏览器交互未验收；没有control-browser时按Sites技能跳过，不把接口测试称为手机实测。

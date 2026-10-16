@@ -8,7 +8,7 @@
 - 新书协议1/schema3，既有书不自动升级。到期承诺必须进任务书并以真实事件核验；资料不足/重大结构重复停止，不自动付费改稿迎合假引用。
 - 伏笔状态事件不覆盖计划定义/期限，paid不可重开；计划及新增承诺检查同章最多40项必需行动，避免不可执行合同。
 - 高级恢复防协议降级、schema不一致与伪造gate.pass，基础及叙事证据只做程序校验，不请求模型。
-- 113/113程序测试、TypeScript、生产构建与32项实际构建Worker HTTP全部通过；私有发布结果随后登记。真实模型、文学质量、浏览器与手机实机未验证。
+- 113/113程序测试、TypeScript、生产构建与32项实际构建Worker HTTP全部通过；V0.6已私有发布至版本6，实际结果见本文件末尾。真实模型、文学质量、浏览器与手机实机未验证。
 - 本轮未读私人稿件/付费配置、未调用模型、未开启费用/启动创作/恢复调度；模型、预算、原Site/D1/环境保持。
 
 ## V0.5实际修改
@@ -45,3 +45,9 @@ https://ai-novel-factory.qq1464356758.chatgpt.site
 2026-10-15T16:40:25.908553Z：V0.5私有发布succeeded；线上版本5；source 5772f16ae6c9b8ea76ee1220965a4d73f31a3d3e；deployment appgdep_6ad101ee51bc819199f62ee74b6b09e6；saved version appgprj_6ac7543090988191a801103993b08416~appgver_5e2b14edca8c8191b0accd60051a39eb；环境revision2。网址保持 https://ai-novel-factory.qq1464356758.chatgpt.site。发布后get_site确认active、本人owner、仅一名owner受众、无组/外部访客/编辑。
 
 GitHub实现提交26be2761fea3225af338f179a78693915258e5d4，已回读main一致。86项程序测试、29项构建Worker HTTP、TypeScript及生产构建全部通过。部署包91文件，已扫描无密钥文件/数据库/安卓签名材料。托管镜像文档是发布前快照；本文件与GitHub main最新日志记录实际发布结果，不需因此重复部署。
+
+## V0.6实际发布与源码
+
+2026-10-16T03:04:21.386971Z：V0.6私有发布succeeded，线上版本6，source 180141c6ce390971851239a92aea4bd37f582f72，deployment appgdep_6ad194203d6081919c4cfc8e9da40eb2，saved version appgprj_6ac7543090988191a801103993b08416~appgver_ff255366e4788191b306dae89abc62e1，环境revision2。网址保持 https://ai-novel-factory.qq1464356758.chatgpt.site；发布后get_site重新确认active、本人owner、仅一名owner受众、无组/外部访客，原调度仍暂停。
+
+实现已提交GitHub main：249f6992d6bd0b54abd6742e285e1798990c85f9，回读一致。113项SQLite/协议/故障测试、32项实际构建Worker HTTP、TypeScript与生产构建全部通过。部署包73文件，SHA-256 6991755be58535998b82f661193c403cdcd6f204ab129a2a4950afff17ab47d5，扫描无凭据文件/数据库/APK/签名材料。托管镜像文档为发布前快照，实际状态以GitHub main最新记录为准，不需重复部署。
