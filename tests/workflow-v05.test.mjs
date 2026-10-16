@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fresh,book,plan,synthetic,review,fixture,configured,writeOne,batchedFixture,openingReport} from './workflow-support.mjs';
-import {step,settings,config,publicConfig,createBook} from '../lib/engine.mjs';
+import {step,settings,config,publicConfig,createBook as createBookCurrent} from '../lib/engine.mjs';
 import {modelCall} from '../lib/model.mjs';
 import {resolveModel} from '../lib/model-routing.mjs';
 import {startJob} from '../lib/jobs.mjs';
@@ -14,6 +14,8 @@ import {writePrompt,planningPrompt} from '../lib/prompts.mjs';
 import {arcFingerprint,arcReady,arcGate,arcPrompt,openingFingerprint,openingGate,openingPrompt} from '../lib/acceptance.mjs';
 import {restoreBackup} from '../lib/backup.mjs';
 import {forkRevision} from '../lib/revisions.mjs';
+// Preserve V0.5 compatibility coverage without silently enabling the new protocol.
+async function createBook(store,...args){const b=await createBookCurrent(store,...args);return store.save(b,{...b,narrativeProtocol:0});}
 
 test('三个角色分别路由、加密和记账，作者与审核不共享密钥',async()=>{
   const s=fresh(),b=await book(s),secret=await configured(s,{model:'TEST PLANNER',writerProvider:'doubao',writerModel:'TEST WRITER',writerApiKey:'SYNTHETIC WRITER KEY',writerInputPrice:2,writerOutputPrice:3,reviewProvider:'qwen',reviewModel:'TEST REVIEW',reviewApiKey:'SYNTHETIC REVIEW KEY',reviewInputPrice:4,reviewOutputPrice:5});
