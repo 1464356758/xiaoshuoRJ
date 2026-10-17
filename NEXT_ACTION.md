@@ -1,8 +1,8 @@
-# 下一步与恢复入口（V0.6）
+# 下一步与恢复入口（V0.7）
 
-读取README、PROJECT_STATUS、ARCHITECTURE、DEVELOPMENT_LOG、docs/WORKFLOW_V06_REVIEW.md、main与AGENTS；不得从零覆盖原Site/D1/密钥。先核对实际发布记录，避免重复保存同一版本。
+读取README、PROJECT_STATUS、ARCHITECTURE、DEVELOPMENT_LOG、docs/WORKFLOW_V07_REVIEW.md、main与AGENTS；不得从零覆盖原Site/D1/密钥。先核对实际发布记录，避免重复保存同一版本。
 
-1. V0.6已通过113项程序测试、32项实际构建Worker HTTP、TypeScript与生产构建，已实际私有发布至版本6/source180141c6ce390971851239a92aea4bd37f582f72/deployment appgdep_6ad194203d6081919c4cfc8e9da40eb2；环境revision2，发布后确认本人独享。GitHub实现提交249f6992d6bd0b54abd6742e285e1798990c85f9已回读一致。无需重复保存或部署。既有V0.5已经私有发布至版本5，source5772f16ae6c9b8ea76ee1220965a4d73f31a3d3e，deployment appgdep_6ad101ee51bc819199f62ee74b6b09e6，环境revision2；GitHub实现提交26be2761fea3225af338f179a78693915258e5d4已回读确认。86项程序测试、29项构建Worker HTTP、类型与生产构建均通过。无需重复保存或部署。
+1. 本轮V0.7已通过141项程序测试、40项实际构建Worker HTTP、TypeScript与生产构建；需以最新私有发布记录确认上线结果。V0.6已通过113项程序测试、32项实际构建Worker HTTP、TypeScript与生产构建，已实际私有发布至版本6/source180141c6ce390971851239a92aea4bd37f582f72/deployment appgdep_6ad194203d6081919c4cfc8e9da40eb2；环境revision2，发布后确认本人独享。GitHub实现提交249f6992d6bd0b54abd6742e285e1798990c85f9已回读一致。无需重复保存或部署。既有V0.5已经私有发布至版本5，source5772f16ae6c9b8ea76ee1220965a4d73f31a3d3e，deployment appgdep_6ad101ee51bc819199f62ee74b6b09e6，环境revision2；GitHub实现提交26be2761fea3225af338f179a78693915258e5d4已回读确认。86项程序测试、29项构建Worker HTTP、类型与生产构建均通过。无需重复保存或部署。
 2. 真实供应商与文学质量仍待本人在软件核对三角色型号、单价、预算和费用授权后启动。开发验证不得擅自读取/使用保存的付费配置，不自动恢复后台调度。
 3. 第一轮只验证新增三章：记录任务书、实际旧稿检索、供应商响应、合格定稿万字成本、返修率及独立审稿与盲读意见。程序85分不是商业签约结论。
 4. 第二轮验证第4–10章因果/人物声音/伏笔与阶段门，再验证第11章滚动详纲。仅有开篇三章不能宣称长篇质量成立。
@@ -12,3 +12,5 @@
 8. 平台官方政策、格式、AI适用方式及合同需当前真实依据；未知不能视为允许。工具不自动投稿、签约、授权版权或保证收入。
 
 检查：node --test tests/*.test.mjs；node node_modules/typescript/bin/tsc --noEmit；Sites build-site.mjs；node scripts/verify-worker.mjs。仅调用合成测试，不请求真实供应商。签名材料仍在仓外，不提交/部署。
+
+V0.7重点验收：四平台官方规则与未知项、绑定改变的免费阻塞、十章失败→保留稿修订→重锁→新总审→第11章、恢复执行门、三章实际usage校准成本。豆瓣当前禁限不能被检测分或个人登记绕过。

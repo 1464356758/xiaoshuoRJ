@@ -77,3 +77,5 @@ pnpm build
 新会话读取 `PROJECT_STATUS.md`、`DEVELOPMENT_LOG.md`、`NEXT_ACTION.md`、`ARCHITECTURE.md`、本README与main提交历史，然后继续。禁止从零覆盖。敏感运行数据不存公开GitHub。
 
 源码入口 `app/workspace.tsx`；领域流程 `lib/engine.mjs`；质量门 `lib/quality.mjs`；预算 `lib/model.mjs`；数据库schema `db/schema.ts`。原仓初始化README已保留在初始Git历史。
+
+V0.7已增加四平台规则版本绑定、十章修订保稿/重锁闭环、90万字三角色成本估算和自然表达审校。详见 [本轮审查](docs/WORKFLOW_V07_REVIEW.md) 与 [明确标注的合成编辑模拟](docs/EDITORIAL_SIMULATION_V07.md)。实际发布状态以PROJECT_STATUS为准。

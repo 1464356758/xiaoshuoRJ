@@ -3,7 +3,7 @@ import {forkRevision} from '@/lib/revisions.mjs';
 import {repositoryAssistant} from '@/lib/model.mjs';
 import {config} from '@/lib/engine.mjs';
 import {Store} from '@/lib/store.mjs';
-import {snapshot,createBook,settings,step,saveChapter,unlockChapter,reviseChapter,exportBook,savePlan,testConnection,setBookBudget,openingAudit} from '@/lib/engine.mjs';
+import {snapshot,adoptPlatformRules,createBook,settings,step,saveChapter,unlockChapter,reviseChapter,exportBook,savePlan,testConnection,setBookBudget,openingAudit} from '@/lib/engine.mjs';
 import {startJob,pauseJob,runJobStep,runnerStatus} from '@/lib/jobs.mjs';
 import {hash} from '@/lib/store.mjs';
 import {restoreBackup} from '@/lib/backup.mjs';
@@ -40,7 +40,8 @@ export async function POST(request:Request) {
     else if(x.action==='runJob')result=await runJobStep(store,x.id,secret);
     else if(x.action==='plan')result=await savePlan(store,x.input);
     else if(x.action==='bookBudget')result=await setBookBudget(store,x.input);
-    else if(x.action==='forkRevision')result=await forkRevision(store,x.id,x.fromChapter,x.key);
+    else if(x.action==='forkRevision')result=await forkRevision(store,x.id,x.fromChapter,x.key,{preserveDraft:x.preserveDraft});
+    else if(x.action==='adoptPlatformRules')result=await adoptPlatformRules(store,x.input);
     else if(x.action==='githubAssist'){const c=await config(store);let b=x.id?await store.get(x.id):null;if(b&&b.kind!=='book')throw new Error('作品不存在');if(x.id&&!b)throw new Error('作品不存在');b ||= {id:store.owner+':repository-assistant',budget:Math.min(c.bookLimit,c.taskLimit)};result=await repositoryAssistant(store,c,b,x.question,secret);}
     else if(x.action==='openingAudit')result=await openingAudit(store,x.id,secret);
     else if(x.action==='testConnection')result=await testConnection(store,secret,undefined,x.role||'planner');
