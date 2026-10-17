@@ -1,5 +1,7 @@
 # 手机控制、云端运行 0.11.0
 
+2026-10-18更新：后端0.11.1已实际上线，HTTPS与控制凭证验证通过；安卓0.11.0兼容。连接信息已单独私下交付，直接在首页填地址和凭证，再进入模型设置。最新资源与恢复状态见[Railway记录](RAILWAY_DEPLOYMENT.md)。
+
 ## 手机必须一直开着吗？
 
 不需要。独立安卓 App 只发送启动/暂停/设置并查看结果；常驻云服务器独立创作。服务器正常运行且任务未到目标、费用/质量门或错误时，手机退出、杀后台、锁屏、断网或关机都不停止任务。重新打开 App 后读取云端保存的进度。关闭 App、切后台和断开配对都不会发送暂停。
@@ -13,7 +15,7 @@
 - Git 源码：`android-cloud/`、`cloud-server/`、根目录 `Dockerfile`，复用现有 V0.9 创作/质量/预算引擎。
 - 本地 205 项程序与真实 SQLite/协议/故障测试、TypeScript、APK 编译/签名/zipalign 及 16 项原生连接策略检查通过。
 - 本地合成供应商验证了手机 HTTP 连接关闭后完成三章、暂停、重启、未知收费阻塞、双执行器排斥及十章失败停止。合成正文不是文学样章。
-- Railway MCP 已加载，已创建私有项目、空服务和免费 HTTPS 域名 novel-factory-cloud-production.up.railway.app；当前没有实际部署、数据盘或运行实例，后台尚未公网运行。固定资源ID见 [Railway 接入记录](RAILWAY_DEPLOYMENT.md)。当前环境无 Docker，容器镜像构建与实际手机、真实 HTTPS、真实 DeepSeek 调用仍待验收。
+- Railway后端0.11.1已SUCCESS上线，500MB/data持久盘和单实例在线；免费HTTPS域名novel-factory-cloud-production.up.railway.app已验证健康与控制鉴权。固定资源ID见 [Railway 接入记录](RAILWAY_DEPLOYMENT.md)。Railway容器镜像构建和真实HTTPS验证已通过；手机实机与真实DeepSeek调用仍待验收。
 
 原网页 V0.9、私有数据库和原暂停调度保持。本版的独立云端不使用 ChatGPT/GPT 代理，创作请求从自己的服务器直连所选服务商的官方允许接口。App 内部使用离线 WebView 渲染界面，不是打开原托管网页。
 

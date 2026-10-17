@@ -1,6 +1,8 @@
 # AI商业小说工厂｜V0.9 架构
 
-## 当前独立云端分支 0.11.0
+## 当前独立云端分支 0.11.1
+
+新增NOVEL_CONTROL_TOKEN仅从部署者的私有环境配置进入main，在拿到独占执行器租约后原子更新控制凭证；保留主密钥、UUID和数据库，移除变量仍使用已保存凭证。新凭证不写API、日志或源码；无效值不覆盖保险箱，第二执行器不得更换凭证。原安卓0.11.0的协议1兼容。
 
 `android-cloud` 是独立安装的安卓控制端；离线 WebView 渲染随包界面，原生 HTTPS 只访问本人配对的服务器 `/api/workspace` 与 `/api/status`。连接凭证用 Android Keystore 加密，首次配对校验产品/协议并固定 UUID；默认 TLS 校验、拒绝重定向，未加载托管网页。退出手机不会发暂停，手机不运行创作服务。
 
@@ -8,7 +10,7 @@
 
 `cloud-server/storage.mjs` 用 Node 24 SQLite 适配原 D1 存储语义，WAL/FULL 同步，正文、任务、版本与费用保存在持久 `/data`。主密钥与控制凭证只在同盘私有文件；旧库缺主密钥则拒绝覆盖。守护循环每约 2 秒推进原 tickRunner；180 秒独占执行器租约、持续续租与供应商前校验保护单实例，原模型步骤租约/CAS/预算保护继续生效。正常退出等待检查点，安全排队任务可恢复复用，遗留在途租约/费用预留则阻塞核对而不重放。
 
-根 `Dockerfile` 自动构建独立服务，适配 Railway 或普通 Docker 云服务器。Railway 必须实际配置持久盘、单副本、关闭休眠及 HTTPS；MCP 接口已加载，私有项目、空服务和免费 HTTPS 域名已创建，当前没有部署或持久盘，后台尚未上线；资源ID见 docs/RAILWAY_DEPLOYMENT.md。Compose 方案提供 Caddy HTTPS 与持久卷。更多见 `docs/CLOUD_CONTROL_V011.md`。下方为原网页与 0.10 本机分支说明，各自身份及执行边界不同。
+根 `Dockerfile` 自动构建独立服务，适配 Railway 或普通 Docker 云服务器。Railway 必须实际配置持久盘、单副本、关闭休眠及 HTTPS；MCP 接口已加载，后端0.11.1已实际上线并验证HTTPS；单实例和500MB持久盘/data在线，资源ID见 docs/RAILWAY_DEPLOYMENT.md。Compose 方案提供 Caddy HTTPS 与持久卷。更多见 `docs/CLOUD_CONTROL_V011.md`。下方为原网页与 0.10 本机分支说明，各自身份及执行边界不同。
 
 新增独立安卓分支：`android-standalone`在本机打包同一React界面和原创作引擎，通过构建适配替换API资源与自动执行入口；原Site文件不改。原生SQLite在一个事务内写记录与4个JSON兼容投影，保留原CAS、租约和原子预算。原生HTTPS只允许官方精确接口，不使用GPT代理；Android Keystore包装本机运行密钥。用户启动的前台dataSync服务单次上限5小时，非sticky，不随重启自动恢复。App使用内部受限HTTPS资源域，不允许WebView加载外部网络。详细架构、安全与验收见`docs/ANDROID_STANDALONE_V010.md`。
 
