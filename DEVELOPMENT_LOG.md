@@ -1,5 +1,9 @@
 # 开发记录
 
+## 2026-10-17｜Railway 免费 HTTPS 接入
+
+Railway MCP 本轮已加载并成功认证，账户最初无项目。根据用户要求申请免费地址，创建私有项目 xiaoshuoRJ / production 空服务 novel-factory-cloud，生成 novel-factory-cloud-production.up.railway.app，目标端口8080。domain-status 确认 Railway 管理DNS与TLS；describe-service 回读 latestDeployment=null、无源码/变量/卷/暂存变更。尚未开始构建、运行或模型请求，未购买域名或升级套餐。固定资源ID与后续部署见 docs/RAILWAY_DEPLOYMENT.md。
+
 ## 2026-10-17｜手机控制、独立云端运行 0.11.0
 
 根据用户明确澄清，从手机本机执行改为手机只控制、云端常驻执行。新增独立 Node 24 服务、持久 SQLite 适配、私有主密钥/控制凭证、固定服务器 ID、独占守护租约和独立任务循环；安卓界面随包离线，原生 HTTPS 连接自己的云端，没有手机前台创作服务，手机关闭不发送暂停。保留原引擎、质量门、原子预算、费用未知不重放，旧网页与原暂停调度不动。
