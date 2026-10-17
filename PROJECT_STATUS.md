@@ -2,11 +2,13 @@
 
 ## 最新：手机控制、独立云端运行 0.11.0 测试版
 
+2026-10-18 最新部署尝试：用户已明确“继续部署”，accept-deploy被工具审批取消，返回“用户未批准，未做更改”。随后回读20项变更仍STAGED、部署列表为空。后台未启动，凭证尚未生成；等待工具审批放行或用户在Railway界面本人应用变更。相同部署费用授权无需重复询问。
+
 用户明确要求手机控制、运行在云端，退出手机后台也继续，不使用 GPT 代理。新增 cloud-server 常驻 Node 24 服务、私有持久 SQLite/主密钥与控制凭证、单执行器租约、手机断开无关的任务循环；复用原质量/预算/版本引擎。新增 android-cloud 离线打包界面与原生 HTTPS 控制端，没有手机创作服务或唤醒锁；与 0.10 同签名，版本码 11。
 
 205/205 程序/真实 SQLite/协议/故障测试、TypeScript、16 项编译后原生连接策略、APK 编译签名与 zipalign 通过。合成供应商验证断开手机 HTTP 后连续完成三章、远程暂停、正常重启恢复目标、中途崩溃未知费用阻塞、双执行器排斥与十章失败不写第十一章。部署 ZIP 带可直接运行的公开引擎 bundle，另有根 Dockerfile 和 Compose/Caddy。
 
-2026-10-17 后续：Railway MCP 接口已加载，已创建私有项目 xiaoshuoRJ、production 空服务 novel-factory-cloud 和免费 HTTPS 域名 novel-factory-cloud-production.up.railway.app，目标端口8080。域名 DNS/TLS 由 Railway 管理。当前 latestDeployment=null，没有连接源码、没有持久盘或运行实例，**后台尚未实际云部署**；完整资源ID与下一步见 docs/RAILWAY_DEPLOYMENT.md。当前没有 Docker 或手机实机，容器构建、公网 HTTPS 和真实 DeepSeek 均未验证。没有真实供应商请求、新费用授权、真实小说启动或旧调度恢复。说明见 docs/CLOUD_CONTROL_V011.md。下方为旧版本历史，不能据此称新云服务已上线。
+2026-10-17 后续：Railway MCP 接口已加载，已创建私有项目 xiaoshuoRJ、production 空服务 novel-factory-cloud 和免费 HTTPS 域名 novel-factory-cloud-production.up.railway.app，目标端口8080。域名 DNS/TLS 由 Railway 管理。当前 latestDeployment=null；固定GitHub源码、500MB持久盘、启动/健康检查与环境变量已准备成20项非破坏性暂存变更，尚未提交，**后台尚未实际云部署**；完整资源ID与下一步见 docs/RAILWAY_DEPLOYMENT.md。当前没有 Docker 或手机实机，容器构建、公网 HTTPS 和真实 DeepSeek 均未验证。没有真实供应商请求、新费用授权、真实小说启动或旧调度恢复。说明见 docs/CLOUD_CONTROL_V011.md。下方为旧版本历史，不能据此称新云服务已上线。
 
 交付核验：APK SHA256 `11519f62d82be63bd59b5ecf0833d7ed6451b6c5092600bd93e494eba0260716`；云端 ZIP SHA256 `7172383d8932e9e3c54ffef831605deb2faa5045ed9d6f875a18fa3afa84997b`，49 个公开源码文件加说明/校验表。已从 ZIP 单独解压，在不依赖原仓 node_modules 的情况下启动实际 HTTP 服务，核对鉴权、费用关闭、手机无关状态及 SQLite/服务器身份重启保留。
 

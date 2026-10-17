@@ -1,5 +1,13 @@
 # 开发记录
 
+## 2026-10-18｜首次提交部署被工具审批取消
+
+用户明确继续部署后，回读原patch20项非破坏性变更并调用accept-deploy；工具返回Cancelled — the user did not approve this action. No changes were made.，无workflow/deployment ID。随后再次核对patch仍STAGED/20项、部署列表为空。后台未启动、未生成连接凭证、没有真实模型调用。保留原待部署资源，不重建或改用其他提交路径绕过审批取消；下一步需要工具审批放行或用户在Railway界面本人应用变更。
+
+## 2026-10-17｜首次Railway部署准备完成
+
+将既有空服务的固定GitHub源码、根Dockerfile/启动/健康检查、单副本和资源上限、四项非敏感环境变量、新500MB持久盘/data准备成20项待部署变更；get-staged-changes回读非破坏性。未提交accept-deploy，无构建/运行实例、未读取真实模型Key或开启模型费用。MCP无法读取个人免费余额，本地无Railway CLI；按项目AGENTS成本规则，最后启动资源前需用户明确确认云费用授权。固定资源ID、patch及后续验证见docs/RAILWAY_DEPLOYMENT.md。
+
 ## 2026-10-17｜Railway 免费 HTTPS 接入
 
 Railway MCP 本轮已加载并成功认证，账户最初无项目。根据用户要求申请免费地址，创建私有项目 xiaoshuoRJ / production 空服务 novel-factory-cloud，生成 novel-factory-cloud-production.up.railway.app，目标端口8080。domain-status 确认 Railway 管理DNS与TLS；describe-service 回读 latestDeployment=null、无源码/变量/卷/暂存变更。尚未开始构建、运行或模型请求，未购买域名或升级套餐。固定资源ID与后续部署见 docs/RAILWAY_DEPLOYMENT.md。
