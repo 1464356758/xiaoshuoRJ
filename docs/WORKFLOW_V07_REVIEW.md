@@ -81,4 +81,12 @@
 
 ## 验证与发布
 
-141/141真实SQLite/协议/故障测试、TypeScript、生产构建与40/40实际构建Worker HTTP通过。原私有Site发布结果将在完成后补记。当前没有control-browser，按Sites技能跳过浏览器QA，未启动替代浏览器或预览路径；手机实机未验收。本轮不读取私人稿件/保存的付费配置，不调用真实供应商、不改变授权/预算/型号、不恢复后台调度、不投稿/签合同/授权版权。
+141/141真实SQLite/协议/故障测试、TypeScript、生产构建与40/40实际构建Worker HTTP通过。原私有Site版本7已发布成功，实际记录见下文。当前没有control-browser，按Sites技能跳过浏览器QA，未启动替代浏览器或预览路径；手机实机未验收。本轮不读取私人稿件/保存的付费配置，不调用真实供应商、不改变授权/预算/型号、不恢复后台调度、不投稿/签合同/授权版权。
+
+### 实际发布记录
+
+2026-10-17T00:06:29.673121Z：V0.7私有发布succeeded；线上版本7；source 91e06c67fe91315c36a2aed2746b4657fa2c4495；deployment appgdep_6ad2bbf44a4481919eba03c3ab8eade2；saved version appgprj_6ac7543090988191a801103993b08416~appgver_8eac62c5637c8191bd38e86e91309c59；环境revision2。网址保持 https://ai-novel-factory.qq1464356758.chatgpt.site。发布后get_site确认active、本人owner、仅一名owner受众，无组/外部访客，原调度仍暂停。
+
+实现代码已提交并回读GitHub main b54cc1e72063d9dc67603dc5142b81f759f85cfc。141/141 SQLite/协议/故障测试、40/40实际构建Worker HTTP、TypeScript及生产构建全部通过。部署包104文件，SHA-256 85bce073500295636e2185fcbdd551b6acd9ff3285d9bf71eb043049f9fdad51；扫描无密钥文件、密钥模式、数据库、APK或签名材料。
+
+本轮仅合成程序与编辑模拟，未请求真实供应商、未读取私人稿件/保存的付费配置、未启用费用或改变预算/型号、未启动真实创作/恢复调度、未投稿/签约/授权版权。朱雀未实测，真实文学质量与手机/浏览器交互未验收。原Android0.4混合入口继续使用同一私有Site，无需为云端更新重打包。
