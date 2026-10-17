@@ -166,3 +166,14 @@ V0.8第一轮私有发布版本8成功（2026-10-17T02:45:07.228071Z，source170
 新增本机TXT中文编码与位置抽样、私有参考库、六维有引文的文风规则、分步两版试写与匿名审核、本人阅读采用、未来章节生效。费用使用原模型路由和原子预留，未启用费用或实际请求供应商。增加同书原子租约、全局暂停、未知结果不重放、原文重合预检、正式文风审校和联合审核范围指纹。备份与修订携带私有资料并校验；不重启导入实验。
 
 179/179 SQLite/协议/故障测试、56/56实际构建Worker HTTP和TypeScript通过。首轮回归发现旧故障注入挂在save而非新claimLease，已改为在实际取租约后注入，保持供应商前规则变化场景，不削弱断言。新clone缺本地execution profile，已用官方helper配置managed-linux；最终构建/打包/发布结果完成后补记。当前无control-browser，按Sites技能跳过Site浏览器QA；没有把程序夹具当成热门小说学习、真实文学质量或手机实测。
+
+
+## V0.9实际私有发布结果
+
+2026-10-17T12:54:47.441226+00:00：V0.9私有发布succeeded，线上版本10；source afd40e130a8ae5b9ff1310b9614f587603bf9597；deployment appgdep_6ad3700f293c8191a40022ed8d1563c9；saved version appgprj_6ac7543090988191a801103993b08416~appgver_8866c8406a448191981b41d6c92eed0d；环境revision2。网址保持 https://ai-novel-factory.qq1464356758.chatgpt.site。发布后原生get_site再次确认active、本人owner、仅一名owner受众、零组/外部访客/编辑，既有自动调度仍is_enabled=false。
+
+实现已提交并回读GitHub main 01e5890c3440a406fbacad7a7491c34cd2d81d2d，根tree 317566f6a9356b1aaa373f9a56a518006514e470；核心文风服务源码逐字回读一致。最终官方源流程按序完成179/179真实SQLite/协议/故障测试、TypeScript、managed-linux五阶段生产构建、56/56实际构建Worker HTTP，并以同一source提交打包。部署包94文件，SHA256 1d45bbc2048f570b0b0e1a781ef5eed07cc40381ea35cfc220784aa985d0263a；扫描无私有运行文件、环境/数据库/APK/签名文件或密钥模式。教程与最终构建一致。
+
+本轮没有读取真实私人稿件或保存的付费配置，没有实际供应商调用、费用开启、预算/模型改变、小说任务启动或调度恢复，没有发表小说、签约或授权版权。没有导入真实热门小说或验证真实文学效果；当前缺control-browser，按Sites技能跳过Site浏览器QA，手机实机未验收。Android0.4仍打开同一私有Site，不需重打包。
+
+托管source镜像中的进度文档是发布前快照；GitHub main最新文档记录实际发布结果，不因此重复部署。

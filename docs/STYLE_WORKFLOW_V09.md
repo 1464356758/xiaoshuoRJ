@@ -52,6 +52,6 @@
 
 ## 验证记录
 
-发布前执行真实SQLite程序/协议/故障测试、TypeScript检查、Worker生产构建及实际Worker HTTP接口检查。结果完成后补记到PROJECT_STATUS和开发日志。
+最终179/179真实SQLite程序/协议/故障测试、TypeScript检查、managed-linux五阶段Worker生产构建及56/56实际Worker HTTP检查通过。2026-10-17T12:54:47.441226+00:00私有发布succeeded，线上版本10，原单一owner受众和暂停调度保持；准确source/版本/部署ID见PROJECT_STATUS与开发日志。
 
 测试覆盖参考库owner隔离/幂等/无费用、中文TXT编码与本机抽样、四种环节角色与计费、分析假引文、暂停与断线不重放、并发租约、配置/预算变化、未来文风的验收指纹、正式逐章引用、重合预检、备份恢复与修订副本。没有真实供应商调用、热门小说导入、文学盲读或签约实验。当前无control-browser，按Sites技能跳过Site浏览器QA；响应式界面不称为手机实机已验收。
