@@ -1,9 +1,11 @@
 'use client';
 import {Button} from '@/components/ui/button';
+import StoryDocuments from '@/components/story-documents';
+import CreationResearch from '@/components/creation-research';
 import {BookOpen,Flag,Users,Compass,ArrowRight,CheckCircle2,Clock3} from 'lucide-react';
 const promiseLabels:Record<string,string>={planned:'待埋设',open:'已埋设',paid:'已兑现'};
 const loopLabels:Record<string,string>={distinct:'已作原文对照',similar:'有相似提醒',no_prior:'首章无旧稿',insufficient:'资料待补充',legacy:'原流程审核'};
-export default function StoryControl({story,book,chapters,onRead,onEditor}:any){
+export default function StoryControl({story,documents,book,chapters,onRead,onEditor}:any){
   if(!book)return <section className="card"><h1>故事控制台</h1><p>创建或选择作品后，查看读者承诺、人物选择和长篇推进。</p></section>;
   if(!story||!book.plan&&!book.planningDraft)return <section className="card"><h1>故事控制台</h1><p>故事骨架保存后，这里会出现承诺、人物和阶段安排。当前不会为了展示面板额外请求模型。</p></section>;
   const outline=book.plan||book.planningDraft.outline;
@@ -16,6 +18,8 @@ export default function StoryControl({story,book,chapters,onRead,onEditor}:any){
     <div className="page-heading"><div><span className="eyebrow">STORY / 长篇控制</span><h1>{book.title}</h1><p>看清读者等待什么、人物付出什么，以及下一章为什么必须发生。</p></div><Button variant="outline" onClick={onEditor}><BookOpen size={16}/>查看稿件与大纲</Button></div>
     <div className="metrics story-metrics"><div><span>正式定稿</span><strong>{story.counts.locked}<small>/ {story.totalChapters}章</small></strong></div><div><span>已埋设的活跃承诺</span><strong>{story.counts.active}</strong></div><div><span>本章应埋设或兑现</span><strong>{story.counts.due}</strong></div><div><span>已兑现</span><strong>{story.counts.paid}</strong></div></div>
     {!story.advanced&&<p className="provider-help">这部作品保留原创作流程。新版故事规格和证据检查用于新作品；这里按已有记录展示，不给旧稿补造人物成长或重跑付费审核。</p>}
+    <StoryDocuments documents={documents} chapters={chapters} onRead={onRead}/>
+    <CreationResearch/>
     <section className="card story-promise"><div className="section-title"><h2><Flag size={18}/> 本书对读者的承诺</h2><span className="tag">{story.finished?'全书章节已定稿':'下一步：第'+story.nextChapter+'章'}</span></div><p className="story-statement">{story.readerPromise||outline.bible.premise||'尚未单列读者体验承诺'}</p><div className="story-two"><div><span className="eyebrow">人物要面对的问题</span><p>{story.themeQuestion||'旧规划未单列主题问题，保留原设定。'}</p></div><details><summary>查看结局需要承担的代价</summary><p>{story.endingCost||'旧规划未单列结局代价。'}</p></details></div></section>
     {story.reminders.length>0&&<section className="card"><h2>当前需要处理</h2>{story.reminders.map((i:any,n:number)=><div className="story-warning" key={n}><strong>第{i.chapter}章 · {i.message}</strong>{i.fix&&<p>{i.fix}</p>}<Button variant="link" onClick={()=>read(i.chapter)}>查看正文与审核</Button></div>)}</section>}
     <div className="story-two"><section className="card"><h2><Compass size={18}/> 当前阶段</h2>{story.currentArc?<><span className="tag">第{story.currentArc.start}–{story.currentArc.end}章</span><h3>{story.currentArc.goal}</h3><p>不可逆后果：{story.currentArc.irreversibleChange}</p>{story.currentArc.payoff&&<p>阶段兑现：{story.currentArc.payoff}</p>}</>:<p>{story.finished?'当前章节目标已完成。':'全书阶段尚未准备完整。'}</p>}</section><section className="card"><h2><Clock3 size={18}/> 本章承诺任务</h2>{due.length?due.map((p:any)=><div className="story-deadline" key={p.id}><span className="tag">{p.timing==='plant_due'?'应埋设':'应兑现'}</span><p>{p.promise}</p><small>原计划：第{p.plantChapter||'未记录'}章埋设 · 第{p.dueChapter||'未记录'}章前兑现</small></div>):<p>没有记录到本章需处理的承诺任务。章节仍需真实推进人物、关系或情势。</p>}</section></div>

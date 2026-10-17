@@ -20,7 +20,8 @@ async function advancedFixture(store,cfg,b,prompt,role,...rest){
  if(role==='review'){const r=review(c,c.number),mem=await storyContext(b,cs,c.contract,c.number);return {...r,characterBeats:[{characterId:'C1',choice:'SYNTHETIC actual choice',consequence:'SYNTHETIC actual consequence',quote:c.content.slice(0,12)}],antiLoop:{status:mem.source.length?'distinct':'no_prior',reason:'SYNTHETIC comparison only',comparisons:mem.source.slice(0,1).map(s=>({chapter:s.chapter,currentQuote:c.content.slice(0,12),pastQuote:s.text.slice(0,12),difference:'SYNTHETIC distinct mechanism'}))},foreshadowing:c.contract.promiseActions.map(a=>({id:a.id,status:a.action==='plant'?'open':'paid',evidence:c.content.slice(12,24)}))};}
  return fixture(store,cfg,b,prompt,role,...rest);
 }
-async function newBook(s,total=3){return createBook(s,{totalChapters:total,targetWords:1000},crypto.randomUUID());}
+// Keep explicit coverage for books created before the V0.8 craft protocol.
+async function newBook(s,total=3){const b=await createBook(s,{totalChapters:total,targetWords:1000},crypto.randomUUID());return s.save(b,{...b,craftProtocol:0});}
 async function until(s,b,predicate,invoke=advancedFixture,max=70){for(let i=0;i<max;i++){const result=await step(s,b.id,'',invoke);if(await predicate(result))return result;}throw Error('SYNTHETIC fixture did not reach state');}
 async function reviewedFirst(s,b){await until(s,b,r=>r.chapter?.status==='locked');return s.get(b.id);}
 

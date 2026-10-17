@@ -2,6 +2,7 @@ import {env} from 'cloudflare:workers';
 import {forkRevision} from '@/lib/revisions.mjs';
 import {repositoryAssistant} from '@/lib/model.mjs';
 import {config} from '@/lib/engine.mjs';
+import {useDeepseekWriter} from '@/lib/writer-preference.mjs';
 import {Store} from '@/lib/store.mjs';
 import {snapshot,adoptPlatformRules,createBook,settings,step,saveChapter,unlockChapter,reviseChapter,exportBook,savePlan,testConnection,setBookBudget,openingAudit} from '@/lib/engine.mjs';
 import {startJob,pauseJob,runJobStep,runnerStatus} from '@/lib/jobs.mjs';
@@ -35,6 +36,7 @@ export async function POST(request:Request) {
     const {store,secret,runnerEnabled}=resources(request);const x:any=await request.json();if(JSON.stringify(x).length>16000000)throw new Error('请求过大');let result;
     if(x.action==='create')result=await createBook(store,x.input,x.key);
     else if(x.action==='settings')result=await settings(store,x.input,secret);
+    else if(x.action==='useDeepseekWriter')result=await useDeepseekWriter(store);
     else if(x.action==='step')result=await step(store,x.id,secret);
     else if(x.action==='startJob'){if(!runnerEnabled)throw new Error('云端调度尚未启用，请联系维护者');result=await startJob(store,x.id,x.target);}
     else if(x.action==='runJob')result=await runJobStep(store,x.id,secret);

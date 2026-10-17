@@ -1,16 +1,14 @@
-# 下一步与恢复入口（V0.7）
+# 下一步与恢复入口（V0.8）
 
-读取README、PROJECT_STATUS、ARCHITECTURE、DEVELOPMENT_LOG、docs/WORKFLOW_V07_REVIEW.md、main与AGENTS；不得从零覆盖原Site/D1/密钥。先核对实际发布记录，避免重复保存同一版本。
+先读README、PROJECT_STATUS、ARCHITECTURE、DEVELOPMENT_LOG、docs/DEEPSEEK_WORKFLOW_V08.md、main和AGENTS；保留原Site/D1/密钥与未发表稿件，不从零覆盖。以PROJECT_STATUS末尾实际发布记录为准。
 
-1. V0.7已实际私有发布至版本7/source91e06c67fe91315c36a2aed2746b4657fa2c4495/deployment appgdep_6ad2bbf44a4481919eba03c3ab8eade2；环境revision2。141项程序测试、40项实际构建Worker HTTP、TypeScript与生产构建通过；GitHub实现b54cc1e72063d9dc67603dc5142b81f759f85cfc已回读。无需重复部署。实际结果以PROJECT_STATUS末尾为准。
-2. 真实供应商与文学质量仍待本人在软件核对三角色型号、单价、预算和费用授权后启动。开发验证不得擅自读取/使用保存的付费配置，不自动恢复后台调度。
-3. 第一轮只验证新增三章：记录任务书、实际旧稿检索、供应商响应、合格定稿万字成本、返修率及独立审稿与盲读意见。程序85分不是商业签约结论。
-4. 第二轮验证第4–10章因果/人物声音/伏笔与阶段门，再验证第11章滚动详纲。仅有开篇三章不能宣称长篇质量成立。
-5. 经本人授权后用同题同任务书比较至少两套模型组合，每次只改一个因素。选型看盲读＋因果缺陷＋有效万字成本；不得用合成夹具或模型自夸排名代替。
-6. 未来可考虑审稿资金前置预留、按token窗口预检和更精确的源文检索；必须先有实际错误与成本样本，不为功能数量扩大模型调用。
-7. Android0.4混合客户端仍打开原私有Site，工作台已更新即沿用；手机安装、私有登录、导航、暂停、下载需实机验收。当前无control-browser，按技能跳过浏览器QA。
-8. 平台官方政策、格式、AI适用方式及合同需当前真实依据；未知不能视为允许。工具不自动投稿、签约、授权版权或保证收入。
+1. 本轮实现DeepSeek主写、四档案、分段边界与成长记忆，待补记最终私有发布及固定主写偏好应用结果。不要把本地成功当线上已更新。
+2. 用户已明确授权把主写换为DeepSeek。固定切换只复用已存DeepSeek加密key并使用9/27元/百万token高峰最高价；没有key明确needs_key，仍切断旧作者回退。预算、spendEnabled、审核、作品和任务不重启。服务入口只允许单真实owner的原私有Sites。
+3. 背景自动调度继续暂停。不以开发验证为由开费、提预算、跑真实模型或恢复任务。服务凭据仅内存/隐藏stdin，不落盘/参数/日志；不伪造用户身份。
+4. 下一轮由本人核对费用并启动新增三章，记录真实usage、返修率、有效万字成本、盲读意见。程序引文/哈希与85分不能证明文学质量或签约；再验证至十章及第11章滚动承接。
+5. 新书创作协议1，旧稿和旧备份保留原协议，不自动重新审核或给原稿补造behavior/readerJourney。修订分支继承原协议、重建自身事实，不混用下游。
+6. 指定抖音评论需要登录，当前没有读到。以后取得评论截图/可用权限后再补分析，不能编造网友共识。B站视频无逐字稿时只引用可核实标题/简介，公开专栏的商业推广和收益自述不视为结果证据。
+7. 手机仍用Android0.4原入口；真实安装/登录/交互待验。无control-browser时按Sites技能跳过Site浏览器QA，不另起预览。
+8. 平台政策AI适用性、实际签约、保底及合同需真实当前依据；不自动投稿、签约、授权版权，不把外部检测当政策许可。
 
-检查：node --test tests/*.test.mjs；node node_modules/typescript/bin/tsc --noEmit；Sites build-site.mjs；node scripts/verify-worker.mjs。仅调用合成测试，不请求真实供应商。签名材料仍在仓外，不提交/部署。
-
-V0.7重点验收：四平台官方规则与未知项、绑定改变的免费阻塞、十章失败→保留稿修订→重锁→新总审→第11章、恢复执行门、三章实际usage校准成本。豆瓣当前禁限不能被检测分或个人登记绕过。
+验证命令：node --test tests/*.test.mjs；node node_modules/typescript/bin/tsc --noEmit；Sites build-site.mjs；node scripts/verify-worker.mjs。只用标明合成的夹具，不用私人稿件/真实key。签名材料仍在仓外。

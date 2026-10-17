@@ -15,7 +15,7 @@ import {arcFingerprint,arcReady,arcGate,arcPrompt,openingFingerprint,openingGate
 import {restoreBackup} from '../lib/backup.mjs';
 import {forkRevision} from '../lib/revisions.mjs';
 // Preserve V0.5 compatibility coverage without silently enabling the new protocol.
-async function createBook(store,...args){const b=await createBookCurrent(store,...args);return store.save(b,{...b,narrativeProtocol:0});}
+async function createBook(store,...args){const b=await createBookCurrent(store,...args);return store.save(b,{...b,narrativeProtocol:0,craftProtocol:0});}
 
 test('三个角色分别路由、加密和记账，作者与审核不共享密钥',async()=>{
   const s=fresh(),b=await book(s),secret=await configured(s,{model:'TEST PLANNER',writerProvider:'doubao',writerModel:'TEST WRITER',writerApiKey:'SYNTHETIC WRITER KEY',writerInputPrice:2,writerOutputPrice:3,reviewProvider:'qwen',reviewModel:'TEST REVIEW',reviewApiKey:'SYNTHETIC REVIEW KEY',reviewInputPrice:4,reviewOutputPrice:5});

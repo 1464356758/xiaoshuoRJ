@@ -91,3 +91,12 @@ lib/platform-policy.mjs保存四平台来源与证据/建议/未知项；新书p
 lib/revisions.mjs可保留N章正文待审；无合同先把正文交策划再全文审核。N+旧详纲截断并滚动重规划，旧格式不兼容时futurePlanInvalidFrom阻塞；失败问题存revisionGuidance。完全未改前缀的audit仅在实际fingerprint一致时复用。恢复白名单保留新增字段，未完成副本不能再次恢复成完整书。锁限制写入，不限制storyContext读取当前分支定稿。
 
 lib/cost-estimate.mjs为无调用的显式假设模型，含822次无返修基准及角色单价/上下文/分段重读/联合审核/局部返修；不替代原费用原子预留。lib/style-quality.mjs只给本地编辑提示，风格要求复用原作者/审核/返修回合；无检测器API、无外发稿件或虚假概率。
+
+
+## V0.8 DeepSeek主写与创作协议
+
+lib/craft.mjs在原策划/任务书/审核请求增加定位、核心规则、行为原则/压力反应/改变条件、readerJourney、逐场景stopAfter/defer以及craftEvidence。新书craftProtocol1，任务书也带1，恢复校验书/合同/审核一致性，旧缺字段为0。引用仅验证文字存在，语义判断仍依赖编辑。资料不足/突变人设停止自动修补，其他可局部修复问题走原三轮/40%上限。
+
+lib/story-documents.mjs从当前作品连续锁定且hash匹配记录派生四份只读视图，计划与事件分开。lib/story-context.mjs另给当前最多四名相关人物的最近选择与最后earned_change，附原文/hash；保持48k安全上限，不另买压缩。文件不是供应商永久会话或第三方Memory Files；本地/供应商缓存不是记忆真值。
+
+lib/writer-preference.mjs按用户本次明确授权，仅固定切换作者为deepseek-v4-pro，复制既存DeepSeek密钥密文，单价9/27，保留其他配置与spendEnabled。CAS同语句检查在途book/chapter/job租约及近130秒reserved调用；旧job configRevision失效。owner在/api/workspace调用；维护者在已确认单owner-private Sites通过/api/writer-preference精确固定JSON调用，分发层消费服务令牌。服务端不接受owner/key/预算/提示词，不返回配置，拒绝Origin/Sec-Fetch/身份及多真实owner，系统心跳owner排除。不得在公共裸Worker复用此信任边界。
