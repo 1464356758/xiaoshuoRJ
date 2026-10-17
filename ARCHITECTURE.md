@@ -1,5 +1,15 @@
 # AI商业小说工厂｜V0.9 架构
 
+## 当前独立云端分支 0.11.0
+
+`android-cloud` 是独立安装的安卓控制端；离线 WebView 渲染随包界面，原生 HTTPS 只访问本人配对的服务器 `/api/workspace` 与 `/api/status`。连接凭证用 Android Keystore 加密，首次配对校验产品/协议并固定 UUID；默认 TLS 校验、拒绝重定向，未加载托管网页。退出手机不会发暂停，手机不运行创作服务。
+
+`cloud-server/build-server.mjs` 把原 API 与 lib 引擎构建为独立 Node bundle，用资源工厂替换 Sites/Cloudflare 身份与环境依赖；没有共享可变全局请求资源。服务使用独立 owner 与随机 Bearer 控制凭证，不信任 GPT 身份头。工作接口还校验固定服务器 ID；公开健康检查只返回布尔状态。模型请求从云服务器按原固定允许列表直连官方 API。
+
+`cloud-server/storage.mjs` 用 Node 24 SQLite 适配原 D1 存储语义，WAL/FULL 同步，正文、任务、版本与费用保存在持久 `/data`。主密钥与控制凭证只在同盘私有文件；旧库缺主密钥则拒绝覆盖。守护循环每约 2 秒推进原 tickRunner；180 秒独占执行器租约、持续续租与供应商前校验保护单实例，原模型步骤租约/CAS/预算保护继续生效。正常退出等待检查点，安全排队任务可恢复复用，遗留在途租约/费用预留则阻塞核对而不重放。
+
+根 `Dockerfile` 自动构建独立服务，适配 Railway 或普通 Docker 云服务器。Railway 必须实际配置持久盘、单副本、关闭休眠及 HTTPS；其插件已安装但当前会话没有可调用部署接口，尚未上线。Compose 方案提供 Caddy HTTPS 与持久卷。更多见 `docs/CLOUD_CONTROL_V011.md`。下方为原网页与 0.10 本机分支说明，各自身份及执行边界不同。
+
 新增独立安卓分支：`android-standalone`在本机打包同一React界面和原创作引擎，通过构建适配替换API资源与自动执行入口；原Site文件不改。原生SQLite在一个事务内写记录与4个JSON兼容投影，保留原CAS、租约和原子预算。原生HTTPS只允许官方精确接口，不使用GPT代理；Android Keystore包装本机运行密钥。用户启动的前台dataSync服务单次上限5小时，非sticky，不随重启自动恢复。App使用内部受限HTTPS资源域，不允许WebView加载外部网络。详细架构、安全与验收见`docs/ANDROID_STANDALONE_V010.md`。
 
 响应式 React 19 / Vinext + Cloudflare Worker，Sites 私有访问，D1 SQLite 持久化。源码同步到用户 GitHub；托管源码另有部署镜像。未发表正文只在私有数据库与用户下载的备份中。

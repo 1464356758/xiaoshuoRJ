@@ -58,6 +58,12 @@ __pycache__/
 /android/build/
 /android-standalone/build/
 /android-standalone/assets/
+/android-cloud/build/
+/android-cloud/assets/
+/cloud-server/generated/
+/cloud-server/.env
+/cloud-server/data/
+/.cloud-data/
 *.apk
 *.p12
 *.jks

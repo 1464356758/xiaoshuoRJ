@@ -1,16 +1,26 @@
-# 下一步与恢复入口（V0.9）
+# 下一步与恢复入口（独立云端 0.11.0）
 
-新增恢复入口：独立安卓本机版0.10.0已完成源码和签名测试包，先读docs/ANDROID_STANDALONE_V010.md与android-standalone/README.md。原网页V0.9保留；后续重点做用户手机安装、WebView、本机迁移、真实DeepSeek Key和锁屏验收。不能把程序测试冒充实机，不自动开启费用或旧任务。原0.4浏览器入口已可用相同证书更新为独立版，无需重复制作网页壳。
+先读取 README、PROJECT_STATUS、ARCHITECTURE、DEVELOPMENT_LOG、docs/CLOUD_CONTROL_V011.md、本文件、main 与 AGENTS。用户当前明确要求：**独立手机 App 控制，运行在自己的云端，手机退出/关机仍可继续，不用 GPT 代理。** 0.10 本机版与 V0.9 网页为保留版本，不能重新交付网页壳或要求手机挂后台。
 
-读取README、PROJECT_STATUS、ARCHITECTURE、DEVELOPMENT_LOG、docs/STYLE_WORKFLOW_V09.md、main与AGENTS。保留原Site、D1、密钥、私有参考和未发表稿件，不从零覆盖。以PROJECT_STATUS末尾实际发布记录为准。
+## 已完成
 
-1. V0.9已实际私有发布至线上版本10/source afd40e130a8ae5b9ff1310b9614f587603bf9597/deployment appgdep_6ad3700f293c8191a40022ed8d1563c9，环境revision2。179项SQLite/协议/故障测试、56项实际构建Worker HTTP、TypeScript与五阶段生产构建通过。GitHub实现01e5890c3440a406fbacad7a7491c34cd2d81d2d已回读，owner-only和原调度暂停已再次确认，不需重复部署。托管文档为发布前快照，实际结果以GitHub main和PROJECT_STATUS文末为准。
-2. 用户可从「参考与文风」导入本机TXT候选或粘贴片段。导入/查看不请求模型；需本人核对可用密钥、型号、最高单价、预算和费用授权后主动分析或试写。当前已知作者偏好DeepSeek V4 Pro/needs_key，开发不读取或使用真实付费配置。
-3. 不恢复原暂停调度，不自动开始小说job，不开费或提预算。文风采用只对下一未开始章生效，未改原稿和三轮返修门。
-4. 后续真实实验按同题比较阅读效果、人物/因果缺陷、实际费用；模型匿名偏好不是盲读读者结论，更不代表签约或保底。正式创作先三章、再十章验证。
-5. 不重放不确定收费POST；文风模型/故事版本变化后不能自动续跑旧实验。保留已保存稿与费用，核对后由本人决定新实验。恢复/修订副本暂停，导入实验不可直接作为新采用依据。
-6. 服务凭据只放内存与隐藏stdin，不写文件、命令参数或日志。GitHub只有源码与安全状态，私有参考和稿件不入公开仓库。
-7. Android0.4混合入口继续打开同一私有Site，更新无需重打包；无control-browser时按Sites技能跳过浏览器QA，不启动替代预览。真实手机操作和模型响应尚未验证。
-8. 原V0.8/B站/抖音核查及平台规则边界见既有文档。指定评论仍未读到，不能编造。保持原规则、正式质量门及独家/投稿边界，不自动发表、签约或授权版权。
+- cloud-server 独立 Node 24 常驻执行器、持久 SQLite、原引擎 bundle、控制鉴权、服务器身份固定、独占租约、正常恢复/不确定收费阻塞。
+- android-cloud 独立安卓控制端，离线界面、原生 HTTPS、Keystore 控制凭证，没有手机创作服务；版本码 11，同证书更新 0.10。
+- 205 项程序/真实 SQLite/协议/故障测试、TypeScript、16 项原生连接策略与 APK 编译签名/zipalign；合成供应商验证断开手机后持续三章、暂停、重启与未知费用保护。
+- 根 Dockerfile、Compose/Caddy、部署包和配对/迁移中文说明。部署包可用 Node 24 无 npm 运行，Docker 自行构建公开 bundle。
 
-验证：node --test tests/*.test.mjs；node node_modules/typescript/bin/tsc --noEmit；Sites build-site.mjs；node scripts/verify-worker.mjs。签名材料和真实运行数据留在源码外。
+## 实际待完成
+
+1. Railway 已确认安装，**不要反复让用户安装**。此前工具注册表与 cloud/executor skill 列表都没有 Railway 可调用部署接口；下一轮先检查是否加载，若有则读取账户/项目与套餐，继续部署准备。尚未创建任何实际云服务、持久盘或公网域名。不要写成已上线，也不要切回 Sites 托管来冒充独立云端。
+2. 从用户源码仓库 main 根 Dockerfile 部署单个常驻服务；实际挂载 `/data`，关闭 Serverless/休眠，单副本，PORT8080，健康检查 `/healthz` 超时240秒，退出宽限150秒，生成HTTPS域名。新服务费用默认关闭、无模型密钥/小说任务。不要静默升级收费套餐或开启供应商付费调用。
+3. Railway 根 Dockerfile 自动识别，当前官方已弃用旧 railway.json，新服务不要依赖它。若工具仍未加载，明确当前限制；浏览器回退需遵守当时可用浏览器工具的授权规则，不要求用户再次安装同一插件。
+4. 部署后只用空库验证 HTTPS、无凭证401、身份固定、持久盘重启与后台心跳。真实合成执行验证不得接入真实供应商；源测试夹具必须保留 SYNTHETIC 标记，不能导入真实书当夹具。
+5. 在自己的私有容器终端 `node cloud-server/admin.mjs pairing` 获取手机连接资料，凭证不要公开、写Git或发聊天。当前未取得实际配对地址/凭证；APK允许用户配对自己的HTTPS域名。
+6. 手机实机安装与实际界面仍待验收；不能把编译/签名/策略测试当实机验证。旧本机作品可只读导出；网页/本机 JSON 导入云端为暂停副本，不迁移密钥、费用授权或自动启动旧任务。
+7. 用户本人填可用 DeepSeek Key、核实模型/单价/预算并主动授权后，先三章再十章做真实文学与费用验收。当前没有真实模型调用或质量结论，不自动开启费用、提高预算、重放未知调用、发表或签约。
+
+## 保留边界与开发
+
+原网页 https://ai-novel-factory.qq1464356758.chatgpt.site 为 V0.9 私有版本10；原 Site/D1、未发表稿件、参考库、模型密钥及暂停的旧调度保留。不要删除/重建或恢复旧调度。新的云端不依赖原 Site 身份头、GPT 代理或托管调度。
+
+`node --test tests/cloud-server.test.mjs` 为云端目标验证，完整套件 `node --test tests/*.test.mjs`；类型 `node node_modules/typescript/bin/tsc --noEmit`。构建控制端 `node android-cloud/build-runtime.mjs`，然后 `python android-cloud/build.py ...`；签名材料留在源码外。GitHub 更新用最新 head 乐观锁，禁止强推，不提交环境、数据库、API密钥、签名材料或私人正文。
