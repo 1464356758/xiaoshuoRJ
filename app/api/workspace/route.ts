@@ -9,6 +9,7 @@ import {startJob,pauseJob,runJobStep,runnerStatus} from '@/lib/jobs.mjs';
 import {hash} from '@/lib/store.mjs';
 import {restoreBackup} from '@/lib/backup.mjs';
 import {submissionPacket,officialRuleSource,policyVerified} from '@/lib/acceptance.mjs';
+import {styleWorkbench,saveStyleReference,archiveStyleReference,createStyleTask,stepStyleTask,pauseStyleTask,activateStyle} from '@/lib/style-workbench.mjs';
 export const dynamic='force-dynamic';
 function resources(request:Request) {
   const e=env as unknown as Record<string,any>;
@@ -21,11 +22,12 @@ const reply=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cach
 export async function GET(request:Request) {
   try {
     const {store,runnerEnabled}=resources(request),q=new URL(request.url).searchParams;
+    if(q.get('style'))return reply(await styleWorkbench(store,q.get('style')));
     if(q.get('submissionPacket')) {const id=q.get('submissionPacket'),state=await snapshot(store,id),b=await store.get(id);if(!b||b.kind!=='book')throw new Error('作品不存在');const p=state.platforms.find((p:any)=>p.name===b.platform);return new Response(await submissionPacket(b,await store.list('chapter',id),await store.get(id+':opening'),p),{headers:{'Content-Type':'text/plain;charset=utf-8','Content-Disposition':'attachment; filename="submission.txt"','Cache-Control':'no-store'}});}
     if(q.get('planVersions'))return reply({versions:await store.list('planVersion',q.get('planVersions'))});
     if(q.get('chapter')) {const c=await store.get(q.get('chapter'));if(!c||c.kind!=='chapter')return reply({error:'章节不存在'},404);return reply({chapter:c,versions:await store.list('version',c.parent)});}
     if(q.get('export'))return new Response(await exportBook(store,q.get('export'),q.get('draft')==='1'),{headers:{'Content-Type':'text/plain;charset=utf-8','Content-Disposition':'attachment; filename="novel.txt"','Cache-Control':'no-store'}});
-    if(q.get('backup')) {const id=q.get('backup');const book=await store.get(id);if(!book||book.kind!=='book')return reply({error:'作品不存在'},404);const cs=await store.list('chapter',id);return reply({format:'novel-factory-backup-v1',book,chapters:cs,versions:await store.list('version',id),planVersions:await store.list('planVersion',id),audits:await store.list('audit',id),exportedAt:new Date().toISOString()});}
+    if(q.get('backup')) {const id=q.get('backup');const book=await store.get(id);if(!book||book.kind!=='book')return reply({error:'作品不存在'},404);const cs=await store.list('chapter',id);return reply({format:'novel-factory-backup-v1',book,chapters:cs,versions:await store.list('version',id),planVersions:await store.list('planVersion',id),audits:await store.list('audit',id),styleReferences:await store.list('styleReference',id),styleProfiles:await store.list('styleProfile',id),styleTasks:await store.list('styleTask',id),exportedAt:new Date().toISOString()});}
     return reply({...await snapshot(store,q.get('book')),runner:{...await runnerStatus(store.db),enabled:runnerEnabled}});
   }catch(e:any){return reply({error:e.message},e.message.includes('登录')?401:503);}
 }
@@ -35,6 +37,12 @@ export async function POST(request:Request) {
     if(Number(request.headers.get('content-length')||0)>16000000)return reply({error:'请求过大'},413);
     const {store,secret,runnerEnabled}=resources(request);const x:any=await request.json();if(JSON.stringify(x).length>16000000)throw new Error('请求过大');let result;
     if(x.action==='create')result=await createBook(store,x.input,x.key);
+    else if(x.action==='styleReference')result=await saveStyleReference(store,x.id,x.input);
+    else if(x.action==='styleArchive')result=await archiveStyleReference(store,x.id,x.key,x.archived);
+    else if(x.action==='styleTaskCreate')result=await createStyleTask(store,x.id,x.input);
+    else if(x.action==='styleTaskStep')result=await stepStyleTask(store,x.id,x.key,secret);
+    else if(x.action==='styleTaskPause')result=await pauseStyleTask(store,x.id,x.key);
+    else if(x.action==='styleActivate')result=await activateStyle(store,x.id,x.input);
     else if(x.action==='settings')result=await settings(store,x.input,secret);
     else if(x.action==='useDeepseekWriter')result=await useDeepseekWriter(store);
     else if(x.action==='step')result=await step(store,x.id,secret);

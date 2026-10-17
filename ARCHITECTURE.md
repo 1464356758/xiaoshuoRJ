@@ -1,4 +1,4 @@
-# AI商业小说工厂｜V0.6 架构
+# AI商业小说工厂｜V0.9 架构
 
 响应式 React 19 / Vinext + Cloudflare Worker，Sites 私有访问，D1 SQLite 持久化。源码同步到用户 GitHub；托管源码另有部署镜像。未发表正文只在私有数据库与用户下载的备份中。
 
@@ -100,3 +100,18 @@ lib/craft.mjs在原策划/任务书/审核请求增加定位、核心规则、�
 lib/story-documents.mjs从当前作品连续锁定且hash匹配记录派生四份只读视图，计划与事件分开。lib/story-context.mjs另给当前最多四名相关人物的最近选择与最后earned_change，附原文/hash；保持48k安全上限，不另买压缩。文件不是供应商永久会话或第三方Memory Files；本地/供应商缓存不是记忆真值。
 
 lib/writer-preference.mjs按用户本次明确授权，仅固定切换作者为deepseek-v4-pro，复制既存DeepSeek密钥密文，单价9/27，保留其他配置与spendEnabled。CAS同语句检查在途book/chapter/job租约及近130秒reserved调用；旧job configRevision失效。owner在/api/workspace调用；维护者在已确认单owner-private Sites通过/api/writer-preference精确固定JSON调用，分发层消费服务令牌。服务端不接受owner/key/预算/提示词，不返回配置，拒绝Origin/Sec-Fetch/身份及多真实owner，系统心跳owner排除。不得在公共裸Worker复用此信任边界。
+
+
+## V0.9参考与文风
+
+lib/style-import.mjs在本机解码中文TXT并按位置取候选；lib/style-profile.mjs处理文风hash、按章生效、原文引文、有限连续重合和备份校验；lib/style-workbench.mjs保存owner隔离的styleReference/styleProfile/styleTask并执行主动实验。components/style-workbench.tsx提供手机入口，不自动请求模型。没有新数据库迁移。
+
+参考分析1次策划，同题两版2次作者、匿名比较1次审核；沿用原模型路由/密钥与预算预留。三个试写步骤分开保存，配置/故事basis或来源变化阻塞，未知中断不重放。正式文风审校并入原单章审核；已有最多三轮局部返修及质量门不变。
+
+Store.claimLease用SQLite条件UPDATE同时检查同书book/chapter/audit/styleTask在途租约，防止新文风请求与正式生成并发。全局暂停覆盖实验；每个在途请求最多保存本步。实验不是云端job，不由后台调度自动启动。
+
+采用需要本作品完成的对照、实际引文审核与本人阅读确认，绑定规则/证据/来源hash及下一未开始章号。风格不改变本书既定人称、视角、时态或人物基线。旧任务绑定styleRevision，历史三章/十章fingerprint仅加入当时实际适用的文风，远期切换不重审无关前缀。
+
+正式写手不接收外部原文，先用本书定稿表达、必要时看非正式试写锚点；参考人物事件不进入事实账本。正文与所选参考40个去标点/空白字符连续重合在付费审稿前阻塞，不等于全网查重或侵权判定。新协议章节文风引文要与实际正文对应。
+
+备份/分支复制私有参考及规则，恢复校验来源/版本/容量/章节styleHash，拒绝文风降级。导入实验只供历史查看，不重放旧请求或直接作为新采用依据；已绑定文风及原始来源保留。
