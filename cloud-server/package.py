@@ -33,10 +33,10 @@ with zipfile.ZipFile(args.output, 'w', compression=zipfile.ZIP_DEFLATED, compres
         name = path.relative_to(root).as_posix()
         checks.append(hashlib.sha256(content).hexdigest() + '  ' + name)
         archive.writestr(name, content)
-    archive.writestr('README-FIRST.md', '# 小说工厂云端运行 0.11.0\n\n先阅读 docs/CLOUD_CONTROL_V011.md 与 cloud-server/README.md。\n'
+    archive.writestr('README-FIRST.md', '# 小说工厂云端运行 0.11.1\n\n先阅读 docs/CLOUD_CONTROL_V011.md 与 cloud-server/README.md。\n'
                      '此包不含个人凭证或小说。Node 24 可直接运行 cloud-server/main.mjs；Railway 自动识别根 Dockerfile。\n'
                      '部署后必须挂载 /data 持久盘、关闭休眠、配置 HTTPS 并在私有终端配对手机。\n'
-                     '当前交付仅完成本地验证，尚未实际上线；新服务的模型费用默认关闭。\n')
+                     '独立服务已在Railway完成首次上线验证；此包不含个人连接凭证，新服务模型费用默认关闭。\n')
     archive.writestr('SHA256SUMS', '\n'.join(checks) + '\n')
 print('Packaged', len(checks), 'public source files:', args.output.name)
 print('SHA256', hashlib.sha256(args.output.read_bytes()).hexdigest())

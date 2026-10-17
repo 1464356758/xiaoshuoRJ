@@ -1,6 +1,6 @@
 import {createServer} from 'node:http';
 import {Store,tickRunner,jobActive,createWorkspaceApi,guardedModelCall} from './generated/workspace-api.mjs';
-import {openDatabase,privateState,authorize,DaemonLease} from './storage.mjs';
+import {openDatabase,privateState,configureControlToken,authorize,DaemonLease} from './storage.mjs';
 
 export async function recoverCloud(store){
   const uncertain=new Set((await store.db.prepare("SELECT DISTINCT book FROM calls WHERE owner=? AND status='reserved'").bind(store.owner).all()).results.map(x=>x.book));
@@ -16,13 +16,13 @@ export async function recoverCloud(store){
   return blocked;
 }
 
-export async function createCloudService({directory,publicOrigin=null,invoke,interval=2000,autoStart=true,leaseDuration=180000}={}){
+export async function createCloudService({directory,publicOrigin=null,invoke,interval=2000,autoStart=true,leaseDuration=180000,controlToken}={}){
   if(!directory)throw new Error('需要持久数据目录');
   if(publicOrigin){const u=new URL(publicOrigin);if(u.protocol!=='https:'||u.username||u.password||u.pathname!=='/'||u.search||u.hash)throw new Error('公网地址必须为纯HTTPS来源');publicOrigin=u.origin;}
-  const secret=await privateState(directory),db=await openDatabase(directory),lease=new DaemonLease(db,leaseDuration);
+  let secret=await privateState(directory);const db=await openDatabase(directory),lease=new DaemonLease(db,leaseDuration);
   if(!lease.acquire()){db.conn.close();throw new Error('同一数据库已有运行中的云端执行器；请等待原执行器安全退出');}
   const store=new Store(db,'independent-cloud-owner');let closing=false,busy=null,timer=null,lastTick=null,ready=true;
-  try{await recoverCloud(store);if(!await store.get('settings:'+store.owner))await store.create('settings',{provider:'deepseek',model:'deepseek-v4-pro',writerModel:'deepseek-v4-pro',reviewModel:'deepseek-v4-pro',inputPrice:9,outputPrice:27,spendEnabled:false},'','settings:'+store.owner);}catch(e){lease.release();db.conn.close();throw e;}
+  try{secret=await configureControlToken(directory,secret,controlToken);await recoverCloud(store);if(!await store.get('settings:'+store.owner))await store.create('settings',{provider:'deepseek',model:'deepseek-v4-pro',writerModel:'deepseek-v4-pro',reviewModel:'deepseek-v4-pro',inputPrice:9,outputPrice:27,spendEnabled:false},'','settings:'+store.owner);}catch(e){lease.release();db.conn.close();throw e;}
   const resources=()=>{if(!lease.held()||closing)throw new Error('云端执行器正在切换或停止，请稍后读取已保存进度');return {store,secret:secret.encryptionKey,runnerEnabled:ready};};
   const api=createWorkspaceApi(resources);
   const renew=setInterval(()=>{if(!lease.renew()){ready=false;clearTimeout(timer);}},Math.min(10000,Math.max(50,leaseDuration/3)));renew.unref();
@@ -42,7 +42,7 @@ export async function createCloudService({directory,publicOrigin=null,invoke,int
     if(!authorize(request.headers.get('Authorization'),secret.controlToken))return json({error:'云端连接凭证无效'},401);
     if(!ready||closing||!lease.held())return json({error:'云端执行器尚未就绪'},503);
     if(request.headers.has('Origin')&&(!publicOrigin||request.headers.get('Origin')!==publicOrigin))return json({error:'请求来源不匹配'},403);
-    if(url.pathname==='/api/status'&&request.method==='GET')return json({product:'novel-factory-cloud',protocol:1,serverId:secret.serverId,version:'0.11.0',workerReady:true,lastTick,execution:'independent-server',requiresPhone:false});
+    if(url.pathname==='/api/status'&&request.method==='GET')return json({product:'novel-factory-cloud',protocol:1,serverId:secret.serverId,version:'0.11.1',workerReady:true,lastTick,execution:'independent-server',requiresPhone:false});
     if(url.pathname!=='/api/workspace'||!['GET','POST'].includes(request.method))return json({error:'接口不存在'},404);
     if(request.headers.get('X-Novel-Server-Id')!==secret.serverId)return json({error:'服务器身份已变化，请重新核对连接；本次未执行操作'},409);
     const headers=new Headers({'Content-Type':'application/json'});

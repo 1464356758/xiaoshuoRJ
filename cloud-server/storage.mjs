@@ -1,5 +1,5 @@
 import {DatabaseSync} from 'node:sqlite';
-import {mkdir,readFile,writeFile,chmod} from 'node:fs/promises';
+import {mkdir,readFile,writeFile,chmod,open,rename,unlink} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
 import {join} from 'node:path';
 import {randomBytes,randomUUID,createHash,timingSafeEqual} from 'node:crypto';
@@ -10,6 +10,21 @@ export async function privateState(directory){
   else{if(existsSync(join(directory,'novel.sqlite')))throw new Error('发现数据库但缺少云端保险箱；请恢复原密钥文件，不要覆盖原数据');value={serverId:randomUUID(),encryptionKey:randomBytes(32).toString('base64'),controlToken:randomBytes(32).toString('base64url')};await writeFile(file,JSON.stringify(value),{mode:0o600,flag:'wx'});}
   if(!/^[a-f0-9-]{36}$/.test(value.serverId)||Buffer.from(value.encryptionKey||'','base64').length!==32||!/^[A-Za-z0-9_-]{43}$/.test(value.controlToken||''))throw new Error('云端保险箱不完整；保留原目录，不要生成新密钥覆盖');
   return value;
+}
+// Deployment-owner configuration only, called after acquiring the daemon lease.
+// Rotates the control credential without replacing identity or encryption keys.
+export async function configureControlToken(directory,state,token){
+  if(token===undefined)return state;
+  if(typeof token!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(token)||Buffer.from(token,'base64url').toString('base64url')!==token)throw new Error('部署连接凭证格式无效；需要32字节base64url，不改原保险箱');
+  if(token===state.controlToken)return state;
+  const value={...state,controlToken:token},temporary=join(directory,'.server-secrets-'+randomUUID()+'.tmp');
+  try{
+    await writeFile(temporary,JSON.stringify(value),{mode:0o600,flag:'wx'});
+    const handle=await open(temporary,'r');try{await handle.sync();}finally{await handle.close();}
+    await rename(temporary,join(directory,'server-secrets.json'));
+    const parent=await open(directory,'r');try{await parent.sync();}finally{await parent.close();}
+    return value;
+  }finally{await unlink(temporary).catch(e=>{if(e.code!=='ENOENT')throw e;});}
 }
 export function authorize(value,token){
   if(typeof value!=='string'||!value.startsWith('Bearer ')||value.length>200)return false;

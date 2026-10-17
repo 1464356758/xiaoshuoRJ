@@ -1,7 +1,8 @@
 // SYNTHETIC ONLY: real HTTP + SQLite, fake literature/model output. No paid calls.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,readFile,rm,unlink} from 'node:fs/promises';
+import {mkdtemp,readFile,rm,unlink,stat} from 'node:fs/promises';
+import {randomBytes} from 'node:crypto';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {buildServer} from '../cloud-server/build-server.mjs';
@@ -48,3 +49,20 @@ test('执行器失去租约后不接受新操作或模型步骤',async()=>{let c
 test('数据库存在而主密钥丢失时停止启动，不生成新密钥覆盖',async()=>{const directory=await mkdtemp(join(tmpdir(),'novel-cloud-keyloss-'));const service=await createCloudService({directory,autoStart:false});await service.stop();try{await unlink(join(directory,'server-secrets.json'));await assert.rejects(createCloudService({directory,autoStart:false}),/缺少云端保险箱/);}finally{await rm(directory,{recursive:true,force:true});}});
 test('云端十章总审失败后持续执行器停止，不写第11章',async()=>{const x=await setup({interval:1,invoke:async(...a)=>a[4]==='arc_review'?{...(await craftFixture(...a)),pass:false,issues:[{severity:'major',message:'SYNTHETIC cloud stage failure'}]}:craftFixture(...a)});try{await configured(x.service,x.directory);const b=await book(x.service,11);await startJob(x.service.store,b.id,11);await x.service.listen(0);x.service.start();await until(async()=>(await x.service.store.get(b.id+':job')).status==='blocked');assert.equal((await x.service.store.list('chapter',b.id)).some(c=>c.number===11),false);}finally{await x.cleanup();}});
 test('手机传输取消只取消控制连接，不发云端暂停或重放POST',async()=>{const original=globalThis.fetch,location=globalThis.location;globalThis.location=new URL('https://appassets.androidplatform.net/assets/index.html');let calls=0,cancelled=0,id;try{installCloudClient({request(value,path){id=value;calls++;assert.equal(path,'/api/workspace');},cancelRequest(){cancelled++;}});const controller=new AbortController(),p=fetch('/api/workspace',{method:'POST',body:'{"action":"startJob"}',signal:controller.signal});controller.abort();await assert.rejects(p,/连接已中断/);globalThis.__novelCloudResult(id,JSON.stringify({status:200,body:'{}'}));assert.equal(calls,1);assert.equal(cancelled,1);}finally{globalThis.fetch=original;globalThis.location=location;}});
+
+test('部署连接凭证更换保留服务器身份、加密主密钥和已保存作品',async()=>{const directory=await mkdtemp(join(tmpdir(),'novel-cloud-pairing-'));let service=await createCloudService({directory,autoStart:false});try{
+  const file=join(directory,'server-secrets.json'),before=JSON.parse(await readFile(file,'utf8')),b=await book(service);
+  await settings(service.store,{apiKey:'SYNTHETIC_PAIRING_KEY_NOT_REAL',spendEnabled:false},before.encryptionKey);const oldSettings=await config(service.store);
+  await service.stop();const token=randomBytes(32).toString('base64url');service=await createCloudService({directory,autoStart:false,controlToken:token});
+  const after=JSON.parse(await readFile(file,'utf8'));assert.equal(after.serverId,before.serverId);assert.equal(after.encryptionKey,before.encryptionKey);assert.equal(after.controlToken,token);assert.equal((await service.store.get(b.id)).title,b.title);assert.equal((await config(service.store)).apiKeyEncrypted,oldSettings.apiKeyEncrypted);assert.equal((await stat(file)).mode&0o777,0o600);
+  const a=await service.listen(0),url='http://127.0.0.1:'+a.port+'/api/status';assert.equal((await fetch(url,{headers:{Authorization:'Bearer '+before.controlToken,Connection:'close'}})).status,401);assert.equal((await fetch(url,{headers:{Authorization:'Bearer '+token,Connection:'close'}})).status,200);
+}finally{await service.stop();await rm(directory,{recursive:true,force:true});}});
+test('无效部署凭证不覆盖保险箱，失败后执行器租约释放',async()=>{const directory=await mkdtemp(join(tmpdir(),'novel-cloud-invalid-token-'));let service=await createCloudService({directory,autoStart:false});await service.stop();try{
+  const file=join(directory,'server-secrets.json'),before=await readFile(file,'utf8');await assert.rejects(createCloudService({directory,autoStart:false,controlToken:'SYNTHETIC_INVALID'}),/连接凭证格式无效/);assert.equal(await readFile(file,'utf8'),before);service=await createCloudService({directory,autoStart:false});
+}finally{await service.stop();await rm(directory,{recursive:true,force:true});}});
+test('第二执行器无法在失去独占租约时修改连接凭证',async()=>{const x=await setup();try{
+  const file=join(x.directory,'server-secrets.json'),before=await readFile(file,'utf8');await assert.rejects(createCloudService({directory:x.directory,autoStart:false,controlToken:randomBytes(32).toString('base64url')}),/已有运行中的/);assert.equal(await readFile(file,'utf8'),before);
+}finally{await x.cleanup();}});
+test('移除部署凭证配置后沿用持久凭证，API不泄露凭证',async()=>{const directory=await mkdtemp(join(tmpdir(),'novel-cloud-persist-token-')),token=randomBytes(32).toString('base64url');let service=await createCloudService({directory,autoStart:false,controlToken:token});try{
+  await service.stop();service=await createCloudService({directory,autoStart:false});const headers={Authorization:'Bearer '+token,'X-Novel-Server-Id':service.serverId};const r=await service.dispatch(new Request('https://cloud.example/api/workspace',{headers}));assert.equal(r.status,200);const raw=await r.text();assert.equal(raw.includes(token),false);assert.equal(JSON.parse(raw).settings.spendEnabled,false);
+}finally{await service.stop();await rm(directory,{recursive:true,force:true});}});
