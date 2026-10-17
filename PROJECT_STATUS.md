@@ -1,6 +1,6 @@
 # AI商业小说工厂｜当前开发状态
 
-更新：2026-10-17，V0.8实现及本地验证进行中，实际线上仍为V0.7/版本7，待本轮发布结果补记。原Site/D1/加密配置及Android0.4入口保留。当前方案见 docs/DEEPSEEK_WORKFLOW_V08.md。
+更新：2026-10-17，V0.8已实际私有发布至线上版本9，DeepSeek主写偏好已保存并读回needs_key。原Site/D1/加密配置及Android0.4入口保留。当前方案见 docs/DEEPSEEK_WORKFLOW_V08.md。
 
 ## V0.8本轮实现
 
@@ -77,3 +77,14 @@ GitHub实现提交26be2761fea3225af338f179a78693915258e5d4，已回读main一致
 实现代码已提交并回读GitHub main b54cc1e72063d9dc67603dc5142b81f759f85cfc。141/141 SQLite/协议/故障测试、40/40实际构建Worker HTTP、TypeScript及生产构建全部通过。部署包104文件，SHA-256 85bce073500295636e2185fcbdd551b6acd9ff3285d9bf71eb043049f9fdad51；扫描无密钥文件、密钥模式、数据库、APK或签名材料。
 
 本轮仅合成程序与编辑模拟，未请求真实供应商、未读取私人稿件/保存的付费配置、未启用费用或改变预算/型号、未启动真实创作/恢复调度、未投稿/签约/授权版权。朱雀未实测，真实文学质量与手机/浏览器交互未验收。原Android0.4混合入口继续使用同一私有Site，无需为云端更新重打包。
+
+
+## V0.8实际发布与偏好读回
+
+2026-10-17T02:48:26.812034Z：最终私有发布succeeded，线上版本9（软件V0.8），source f348a5628d419bb09d16c15f8e6e039cc6f32377；deployment appgdep_6ad2e1eae7848191a3cf4061d92425a5；saved version appgprj_6ac7543090988191a801103993b08416~appgver_ec2fb8a3b8a88191bdb87bf56453640b；环境revision2。网址保持 https://ai-novel-factory.qq1464356758.chatgpt.site。发布后原生get_site确认active、本人owner、单一owner受众、零共享组和外部访客；原自动调度is_enabled=false。
+
+实现已同步并回读GitHub main 2f6ba6ed76c1b3ea1d6cd15d776f01e13364e589。161/161 SQLite/协议/故障测试、48/48实际构建Worker HTTP检查、TypeScript和生产构建通过。最终包75文件，SHA256 b67e46f1ae7215ea09f93561f70835cd44650ac4d192f5b8d30cc002941824a5；扫描无密钥模式、环境/数据库/APK/签名文件。
+
+通过当前Site服务凭据（仅内存与隐藏stdin）执行固定主写偏好，返回needs_key / deepseek / deepseek-v4-pro；再次相同调用读回同状态，未重写、未发模型请求。此前尚未保存模型配置，本次只登记DeepSeek作者及最高参考单价，沿用有效默认预算和关闭的费用授权。用户仍需在软件配置可用密钥、核实策划/审核/单价，再本人授权并启动。
+
+没有真实供应商请求、私人稿件读取、密钥明文读取、费用开启、预算提高、任务启动/恢复、小说发表、签约或版权授权。指定抖音评论仍未读到；B站可读专栏已分析，视频无逐字稿不称已观看。真实文学质量、供应商长响应和Site浏览器/手机实机未验收。Android0.4入口仍使用同一Site。

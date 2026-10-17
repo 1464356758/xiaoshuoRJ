@@ -146,3 +146,14 @@ GitHub实现提交249f6992d6bd0b54abd6742e285e1798990c85f9，已回读确认。1
 V0.8本地验证完成：161/161真实SQLite/协议/故障测试、48/48实际构建Worker HTTP检查、TypeScript与生产构建通过。没有真实供应商调用、文学样章、朱雀检测或Site浏览器/手机实机验证。 私有发布结果随后补记。
 
 V0.8第一轮私有发布版本8成功（2026-10-17T02:45:07.228071Z，source170ab7f8b3f1c38f07392348b8de29ffc4cd3ff6）。随后固定偏好动作安全返回409「请先保存DeepSeek配置」；未读出模型配置或密钥。发现首次未配置路径缺口，补充带同等原子保护的默认配置登记：明确needs_key，保留有效默认预算及关闭费用，不创建任务。追加SQLite与实际构建HTTP验证，最终发布结果另记。
+
+
+## V0.8实际发布与偏好读回
+
+2026-10-17T02:48:26.812034Z：最终私有发布succeeded，线上版本9（软件V0.8），source f348a5628d419bb09d16c15f8e6e039cc6f32377；deployment appgdep_6ad2e1eae7848191a3cf4061d92425a5；saved version appgprj_6ac7543090988191a801103993b08416~appgver_ec2fb8a3b8a88191bdb87bf56453640b；环境revision2。网址保持 https://ai-novel-factory.qq1464356758.chatgpt.site。发布后原生get_site确认active、本人owner、单一owner受众、零共享组和外部访客；原自动调度is_enabled=false。
+
+实现已同步并回读GitHub main 2f6ba6ed76c1b3ea1d6cd15d776f01e13364e589。161/161 SQLite/协议/故障测试、48/48实际构建Worker HTTP检查、TypeScript和生产构建通过。最终包75文件，SHA256 b67e46f1ae7215ea09f93561f70835cd44650ac4d192f5b8d30cc002941824a5；扫描无密钥模式、环境/数据库/APK/签名文件。
+
+通过当前Site服务凭据（仅内存与隐藏stdin）执行固定主写偏好，返回needs_key / deepseek / deepseek-v4-pro；再次相同调用读回同状态，未重写、未发模型请求。此前尚未保存模型配置，本次只登记DeepSeek作者及最高参考单价，沿用有效默认预算和关闭的费用授权。用户仍需在软件配置可用密钥、核实策划/审核/单价，再本人授权并启动。
+
+没有真实供应商请求、私人稿件读取、密钥明文读取、费用开启、预算提高、任务启动/恢复、小说发表、签约或版权授权。指定抖音评论仍未读到；B站可读专栏已分析，视频无逐字稿不称已观看。真实文学质量、供应商长响应和Site浏览器/手机实机未验收。Android0.4入口仍使用同一Site。
