@@ -1,5 +1,7 @@
 # AI商业小说工厂
 
+**新增独立安卓本机版0.10.0（测试版）**：界面、创作引擎、SQLite和后台服务随APK安装，直接连接DeepSeek等官方API，无需ChatGPT登录或托管网页。原私有网页仍为V0.9，保持原数据及暂停状态。安装、迁移、后台限制及验证边界见 [独立安卓说明](docs/ANDROID_STANDALONE_V010.md)；源码和构建入口见 [android-standalone](android-standalone/README.md)。
+
 面向安卓和电脑的私有小说创作工作台。**当前代码V0.9：增加私有参考库、六维文风分析、同题两版试写及匿名审核；本人阅读采用后只对未来章节生效。继续沿用DeepSeek策划与主写、原审核配置和预算边界。原Site和数据库保留，真实文学质量与手机实机仍待验收。**
 
 线上地址：https://ai-novel-factory.qq1464356758.chatgpt.site

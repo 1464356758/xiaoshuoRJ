@@ -1,5 +1,7 @@
 # 下一步与恢复入口（V0.9）
 
+新增恢复入口：独立安卓本机版0.10.0已完成源码和签名测试包，先读docs/ANDROID_STANDALONE_V010.md与android-standalone/README.md。原网页V0.9保留；后续重点做用户手机安装、WebView、本机迁移、真实DeepSeek Key和锁屏验收。不能把程序测试冒充实机，不自动开启费用或旧任务。原0.4浏览器入口已可用相同证书更新为独立版，无需重复制作网页壳。
+
 读取README、PROJECT_STATUS、ARCHITECTURE、DEVELOPMENT_LOG、docs/STYLE_WORKFLOW_V09.md、main与AGENTS。保留原Site、D1、密钥、私有参考和未发表稿件，不从零覆盖。以PROJECT_STATUS末尾实际发布记录为准。
 
 1. V0.9已实际私有发布至线上版本10/source afd40e130a8ae5b9ff1310b9614f587603bf9597/deployment appgdep_6ad3700f293c8191a40022ed8d1563c9，环境revision2。179项SQLite/协议/故障测试、56项实际构建Worker HTTP、TypeScript与五阶段生产构建通过。GitHub实现01e5890c3440a406fbacad7a7491c34cd2d81d2d已回读，owner-only和原调度暂停已再次确认，不需重复部署。托管文档为发布前快照，实际结果以GitHub main和PROJECT_STATUS文末为准。

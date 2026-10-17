@@ -1,0 +1,9 @@
+import {useEffect,useState} from 'react';
+import {Button} from '@/components/ui/button';
+import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
+export default function DevicePanel(){
+  const [open,setOpen]=useState(false),[info,setInfo]=useState<any>(null),[balance,setBalance]=useState('');
+  useEffect(()=>{if(!open)return;let live=true;const read=()=>fetch('/api/device').then(r=>r.json()).then(x=>{if(live)setInfo(x);});read();const t=setInterval(read,3000);return()=>{live=false;clearInterval(t);};},[open]);
+  async function checkBalance(){setBalance('查询中');try{const r=await fetch('/api/device?balance=1'),x:any=await r.json();if(!r.ok)throw new Error(x.error);setBalance((x.balance_infos||[]).map((i:any)=>`${i.currency} ${i.total_balance}（充值 ${i.topped_up_balance}，赠送 ${i.granted_balance}）`).join('\n')||'暂无余额信息');}catch(e:any){setBalance(e.message);}}
+  return <><Button variant="outline" onClick={()=>setOpen(true)}>本机App</Button><Dialog open={open} onOpenChange={setOpen}><DialogContent className="factory-dialog"><DialogTitle>独立安卓 · 0.10.0</DialogTitle><DialogDescription>界面、创作引擎与SQLite随App安装。模型请求直接发往你选择的官方接口。</DialogDescription><p>运行状态：{info?.running?'自动执行中':'未自动执行'}</p><p>{info?.message||'尚未启动任务'}</p><p>本机自动运行上限约5小时；系统可能更早停止。通知栏可暂停。进程重启后保持暂停，不重放未确认的付费请求。</p><div className="button-row"><Button variant="outline" onClick={checkBalance}>查询DeepSeek余额</Button><Button variant="outline" onClick={()=>{(window as any).NovelNative.openBatterySettings();}}>后台电量设置</Button></div>{balance&&<pre className="structured">{balance}</pre>}<p>旧网页数据：在原工作台下载「完整作品备份」，再从本App「模型设置 → 备份与恢复」导入。API密钥需重新填写。</p><p>卸载会删除本机数据库。请定期导出备份。</p><a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noreferrer">创建API Key</a> · <a href="https://api-docs.deepseek.com/zh-cn/quick_start/pricing/" target="_blank" rel="noreferrer">官方价格</a></DialogContent></Dialog></>;
+}

@@ -1,5 +1,7 @@
 # AI商业小说工厂｜V0.9 架构
 
+新增独立安卓分支：`android-standalone`在本机打包同一React界面和原创作引擎，通过构建适配替换API资源与自动执行入口；原Site文件不改。原生SQLite在一个事务内写记录与4个JSON兼容投影，保留原CAS、租约和原子预算。原生HTTPS只允许官方精确接口，不使用GPT代理；Android Keystore包装本机运行密钥。用户启动的前台dataSync服务单次上限5小时，非sticky，不随重启自动恢复。App使用内部受限HTTPS资源域，不允许WebView加载外部网络。详细架构、安全与验收见`docs/ANDROID_STANDALONE_V010.md`。
+
 响应式 React 19 / Vinext + Cloudflare Worker，Sites 私有访问，D1 SQLite 持久化。源码同步到用户 GitHub；托管源码另有部署镜像。未发表正文只在私有数据库与用户下载的备份中。
 
 ## 模块
