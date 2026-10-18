@@ -32,6 +32,17 @@ test('私有云API可免费复用完整修订响应，仍要求控制凭证并�
   }finally{await x.cleanup();}
 });
 
+test('私有云API重验已有审核，绑定原稿哈希并保留三轮和费用记录',async()=>{
+  const x=await setup();try{
+    let b=await book(x.service);for(let n=0;n<3;n++)await step(x.service.store,b.id,'',craftFixture);
+    b=await x.service.store.get(b.id);const c=(await x.service.store.list('chapter',b.id))[0],cfg=await config(x.service.store);
+    const response=await craftFixture(x.service.store,cfg,{...b,activeChapter:1},'','review');
+    await x.service.store.save(c,{...c,attempt:3,modelCandidate:{parsed:true,role:'review',response,sourceHash:c.hash,bookId:b.id,chapterNumber:1,planRevision:b.planRevision||0,styleRevision:0,platformHash:b.platformBinding?.hash||null,configRevision:cfg.revision||0}});
+    const headers=await authorization(x.directory,x.service),before=await x.service.store.cost(b.id),r=await x.service.dispatch(new Request('https://cloud.example/api/workspace',{method:'POST',headers,body:JSON.stringify({action:'acceptReviewCandidate',id:c.id})}));
+    assert.equal(r.status,200);const {result}=await r.json();assert.equal(result.chapter.status,'locked');assert.equal(result.chapter.attempt,3);assert.deepEqual(await x.service.store.cost(b.id),before);
+  }finally{await x.cleanup();}
+});
+
 test('长模型调用等待期间独立心跳持续更新，手机读取不会将执行器误判离线',async()=>{
   let release,entered=false,calls=0;const gate=new Promise(r=>release=r);
   const x=await setup({leaseDuration:300,invoke:async(...args)=>{calls++;entered=true;await gate;return craftFixture(...args);}});

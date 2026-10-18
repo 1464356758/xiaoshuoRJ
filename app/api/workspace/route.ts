@@ -4,7 +4,7 @@ import {repositoryAssistant} from '@/lib/model.mjs';
 import {config} from '@/lib/engine.mjs';
 import {useDeepseekWriter} from '@/lib/writer-preference.mjs';
 import {Store} from '@/lib/store.mjs';
-import {snapshot,adoptPlatformRules,createBook,settings,step,saveChapter,unlockChapter,reviseChapter,exportBook,savePlan,testConnection,setBookBudget,openingAudit,acceptRepairCandidate} from '@/lib/engine.mjs';
+import {snapshot,adoptPlatformRules,createBook,settings,step,saveChapter,unlockChapter,reviseChapter,exportBook,savePlan,testConnection,setBookBudget,openingAudit,acceptRepairCandidate,acceptReviewCandidate} from '@/lib/engine.mjs';
 import {startJob,pauseJob,runJobStep,runnerStatus} from '@/lib/jobs.mjs';
 import {hash} from '@/lib/store.mjs';
 import {restoreBackup} from '@/lib/backup.mjs';
@@ -47,6 +47,7 @@ export async function POST(request:Request) {
     else if(x.action==='useDeepseekWriter')result=await useDeepseekWriter(store);
     else if(x.action==='step')result=await step(store,x.id,secret);
     else if(x.action==='acceptRepairCandidate')result=await acceptRepairCandidate(store,x.id);
+    else if(x.action==='acceptReviewCandidate')result=await acceptReviewCandidate(store,x.id);
     else if(x.action==='startJob'){if(!runnerEnabled)throw new Error('云端调度尚未启用，请联系维护者');result=await startJob(store,x.id,x.target);}
     else if(x.action==='runJob')result=await runJobStep(store,x.id,secret);
     else if(x.action==='plan')result=await savePlan(store,x.input);
