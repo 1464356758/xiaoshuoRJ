@@ -1,8 +1,8 @@
 # AI商业小说工厂
 
-**当前手机云端控制端：0.12.0（兼容后端0.11.1）**。重新审核已交付APK后，修复初始重连空表单、未保存配置仍启动旧配置、保存中输入丢失等问题；统一一个保存入口与一个云端启动入口，明确一把Key共用/三角色独立设置，校正默认型号继承。最终APK通过20项界面+真实SQLite场景、213项程序测试、16项原生连接策略检查，版本码13且与旧包同证书，可覆盖安装。详见[重新审核与精修记录](docs/CLOUD_CONTROL_AUDIT_V012.md)。手机实机与真实供应商仍待实际使用验证。
+**当前：手机控制端0.12.0，独立后端0.12.1。** 云端已修复DeepSeek长策划请求100秒超时，统一延长请求和任务锁、持续更新心跳，结构请求明确思考强度与JSON模式；217项程序测试与TypeScript通过。真实云端连接测试成功，原作品10章任务已继续，实际创作检查点验证进行中。兼容现有手机端，无需重新配对。详见[真实接入与超时修复](docs/DEEPSEEK_TIMEOUT_FIX_V0121.md)。
 
-独立App随包安装界面，手机控制自己的服务器持续创作并直连DeepSeek官方API；退出、断网或关机不暂停任务，无需GPT代理。Railway后端0.11.1已上线，地址`novel-factory-cloud-production.up.railway.app`，持久SQLite/服务器身份及连接凭证沿用。资源见[Railway接入记录](docs/RAILWAY_DEPLOYMENT.md)，安装部署见[云端控制说明](docs/CLOUD_CONTROL_V011.md)、[服务源码](cloud-server/README.md)和[安卓控制端](android-cloud/README.md)。
+独立App随包安装界面，手机控制自己的服务器持续创作并直连DeepSeek官方API；退出、断网或关机不暂停任务，无需GPT代理。Railway后端0.12.1已上线，地址`novel-factory-cloud-production.up.railway.app`，持久SQLite/服务器身份及连接凭证沿用。资源见[Railway接入记录](docs/RAILWAY_DEPLOYMENT.md)，安装部署见[云端控制说明](docs/CLOUD_CONTROL_V011.md)和[安卓控制端](android-cloud/README.md)。配置页面精修与原APK的20项界面验证见[0.12.0审核记录](docs/CLOUD_CONTROL_AUDIT_V012.md)；实际手机操作仍需用户设备验证。
 
 **新增独立安卓本机版0.10.0（测试版）**：界面、创作引擎、SQLite和后台服务随APK安装，直接连接DeepSeek等官方API，无需ChatGPT登录或托管网页。原私有网页仍为V0.9，保持原数据及暂停状态。安装、迁移、后台限制及验证边界见 [独立安卓说明](docs/ANDROID_STANDALONE_V010.md)；源码和构建入口见 [android-standalone](android-standalone/README.md)。
 
