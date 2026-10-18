@@ -1,4 +1,4 @@
-# 安卓云端控制 App 0.11.0
+# 安卓云端控制 App 0.11.2
 
 独立 APK；React 界面随安装包离线打包，WebView 不加载托管网页。HTTPS 控制请求由原生网络发送到自己部署的云端，创作引擎运行在服务器。不需要 ChatGPT 登录、代理或手机后台服务。
 
@@ -12,10 +12,10 @@
 
 ```bash
 node android-cloud/build-runtime.mjs
-python android-cloud/build.py --sdk-root /absolute/android-sdk --output /absolute/NovelFactory-0.11.0-Cloud-Control.apk --signing-dir /absolute/private-signing
+python android-cloud/build.py --sdk-root /absolute/android-sdk --output /absolute/NovelFactory-0.11.2-Cloud-Control.apk --signing-dir /absolute/private-signing
 ```
 
-构建器要求 Android 35 android.jar、aapt2、d8、zipalign 和 apksigner；签名材料在源码外。包名 `cn.novelfactory.personal`，版本码 11，与已交付 0.10 使用相同私有证书，可覆盖更新。
+构建器要求 Android 35 android.jar、aapt2、d8、zipalign 和 apksigner；签名材料在源码外。包名 `cn.novelfactory.personal`，版本码 12，与已交付 0.10 使用相同私有证书，可覆盖更新。
 
 ## 边界
 
@@ -26,4 +26,4 @@ python android-cloud/build.py --sdk-root /absolute/android-sdk --output /absolut
 - 网络取消不发暂停，也不自动重放 POST；重新打开读取已保存进度。
 - 系统文件选择器导入/导出，提供旧 0.10 本机库只读导出；不自动复制旧密钥、费用授权或任务。
 
-已编译、签名、校验对齐并通过 16 项原生连接策略检查。尚未做手机实机、真实公网 HTTPS 或真实供应商验收。
+0.11.2修复模型保存版本同步和手机错误提示，并新增共用Key入口。211项测试和三条实际打包UI操作链通过，APK编译、签名和对齐通过；云端公网HTTPS已验证，安卓手机实机和真实供应商验收仍未完成。详见[本轮修复](../docs/CLOUD_SETTINGS_FIX_V0112.md)。

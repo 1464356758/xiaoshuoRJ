@@ -50,6 +50,17 @@ test('数据库存在而主密钥丢失时停止启动，不生成新密钥覆�
 test('云端十章总审失败后持续执行器停止，不写第11章',async()=>{const x=await setup({interval:1,invoke:async(...a)=>a[4]==='arc_review'?{...(await craftFixture(...a)),pass:false,issues:[{severity:'major',message:'SYNTHETIC cloud stage failure'}]}:craftFixture(...a)});try{await configured(x.service,x.directory);const b=await book(x.service,11);await startJob(x.service.store,b.id,11);await x.service.listen(0);x.service.start();await until(async()=>(await x.service.store.get(b.id+':job')).status==='blocked');assert.equal((await x.service.store.list('chapter',b.id)).some(c=>c.number===11),false);}finally{await x.cleanup();}});
 test('手机传输取消只取消控制连接，不发云端暂停或重放POST',async()=>{const original=globalThis.fetch,location=globalThis.location;globalThis.location=new URL('https://appassets.androidplatform.net/assets/index.html');let calls=0,cancelled=0,id;try{installCloudClient({request(value,path){id=value;calls++;assert.equal(path,'/api/workspace');},cancelRequest(){cancelled++;}});const controller=new AbortController(),p=fetch('/api/workspace',{method:'POST',body:'{"action":"startJob"}',signal:controller.signal});controller.abort();await assert.rejects(p,/连接已中断/);globalThis.__novelCloudResult(id,JSON.stringify({status:200,body:'{}'}));assert.equal(calls,1);assert.equal(cancelled,1);}finally{globalThis.fetch=original;globalThis.location=location;}});
 
+test('原生回调丢失后手机请求超时释放，不重放写操作，迟到响应不改变结果',async()=>{const original=globalThis.fetch,location=globalThis.location;globalThis.location=new URL('https://appassets.androidplatform.net/assets/index.html');let calls=0,cancelled=0,id;try{
+  installCloudClient({request(value){id=value;calls++;},cancelRequest(){cancelled++;}},{timeoutMs:15});
+  await assert.rejects(fetch('/api/workspace',{method:'POST',body:'{"action":"settings"}'}),/等待超时/);
+  globalThis.__novelCloudResult(id,JSON.stringify({status:200,body:'{}'}));assert.equal(calls,1);assert.equal(cancelled,1);
+}finally{globalThis.fetch=original;globalThis.location=location;}});
+test('原生同步失败会清理计时器，配对和保存请求都能结束',async()=>{const original=globalThis.fetch,location=globalThis.location;globalThis.location=new URL('https://appassets.androidplatform.net/assets/index.html');let cancelled=0;try{
+  const client=installCloudClient({request(){throw new Error('SYNTHETIC bridge failure');},connect(){throw new Error('SYNTHETIC pairing failure');},cancelRequest(){cancelled++;}},{timeoutMs:10});
+  await assert.rejects(fetch('/api/workspace',{method:'POST',body:'{}'}),/bridge failure/);await assert.rejects(client.connect('https://cloud.example','SYNTHETIC'),/pairing failure/);
+  await new Promise(resolve=>setTimeout(resolve,25));assert.equal(cancelled,0);
+}finally{globalThis.fetch=original;globalThis.location=location;}});
+
 test('部署连接凭证更换保留服务器身份、加密主密钥和已保存作品',async()=>{const directory=await mkdtemp(join(tmpdir(),'novel-cloud-pairing-'));let service=await createCloudService({directory,autoStart:false});try{
   const file=join(directory,'server-secrets.json'),before=JSON.parse(await readFile(file,'utf8')),b=await book(service);
   await settings(service.store,{apiKey:'SYNTHETIC_PAIRING_KEY_NOT_REAL',spendEnabled:false},before.encryptionKey);const oldSettings=await config(service.store);
