@@ -8,7 +8,7 @@ export async function buildServer(){
   let source=adaptRoute(await readFile(join(root,'app/api/workspace/route.ts'),'utf8'));
   const split=source.indexOf('export const dynamic');if(split<0)throw new Error('需复核API导出边界');
   const imports=source.slice(0,split),body=source.slice(split).replace(/^export /gm,'').replace('globalThis.__novelAppResources(request)','resourcesFor(request)');
-  source=imports+"\nimport {tickRunner,jobActive} from '@/lib/jobs.mjs';\nimport {modelCall as guardedModelCall} from '@/lib/model.mjs';\nexport {Store,tickRunner,jobActive,guardedModelCall};\nexport function createWorkspaceApi(resourcesFor) {\n"+body+'\nreturn {GET,POST};\n}\n';
+  source=imports+"\nimport {tickRunner,jobActive,refreshRunnerHeartbeat} from '@/lib/jobs.mjs';\nimport {modelCall as guardedModelCall} from '@/lib/model.mjs';\nexport {Store,tickRunner,jobActive,refreshRunnerHeartbeat,guardedModelCall};\nexport function createWorkspaceApi(resourcesFor) {\n"+body+'\nreturn {GET,POST};\n}\n';
   const out=join(root,'cloud-server/generated');await mkdir(out,{recursive:true});
   await esbuild.build({stdin:{contents:source,resolveDir:root,sourcefile:'cloud-workspace.ts',loader:'ts'},bundle:true,format:'esm',platform:'node',target:'node24',alias:{'@':root},outfile:join(out,'workspace-api.mjs'),legalComments:'eof'});
   const generated=await readFile(join(out,'workspace-api.mjs'),'utf8');

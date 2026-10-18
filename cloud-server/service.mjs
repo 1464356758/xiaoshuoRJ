@@ -1,5 +1,5 @@
 import {createServer} from 'node:http';
-import {Store,tickRunner,jobActive,createWorkspaceApi,guardedModelCall} from './generated/workspace-api.mjs';
+import {Store,tickRunner,jobActive,refreshRunnerHeartbeat,createWorkspaceApi,guardedModelCall} from './generated/workspace-api.mjs';
 import {openDatabase,privateState,configureControlToken,authorize,DaemonLease} from './storage.mjs';
 
 export async function recoverCloud(store){
@@ -25,7 +25,10 @@ export async function createCloudService({directory,publicOrigin=null,invoke,int
   try{secret=await configureControlToken(directory,secret,controlToken);await recoverCloud(store);if(!await store.get('settings:'+store.owner))await store.create('settings',{provider:'deepseek',model:'deepseek-v4-pro',writerModel:'deepseek-v4-pro',reviewModel:'deepseek-v4-pro',inputPrice:9,outputPrice:27,spendEnabled:false},'','settings:'+store.owner);}catch(e){lease.release();db.conn.close();throw e;}
   const resources=()=>{if(!lease.held()||closing)throw new Error('云端执行器正在切换或停止，请稍后读取已保存进度');return {store,secret:secret.encryptionKey,runnerEnabled:ready};};
   const api=createWorkspaceApi(resources);
-  const renew=setInterval(()=>{if(!lease.renew()){ready=false;clearTimeout(timer);}},Math.min(10000,Math.max(50,leaseDuration/3)));renew.unref();
+  const renew=setInterval(()=>{
+    if(!lease.renew()){ready=false;clearTimeout(timer);return;}
+    if(busy&&!closing)void refreshRunnerHeartbeat(db).then(state=>{lastTick=state.lastTick;}).catch(()=>{});
+  },Math.min(10000,Math.max(50,leaseDuration/3)));renew.unref();
   async function tick(){
     if(closing||!ready||!lease.held()||busy)return null;
     busy=(async()=>{try{
@@ -42,7 +45,7 @@ export async function createCloudService({directory,publicOrigin=null,invoke,int
     if(!authorize(request.headers.get('Authorization'),secret.controlToken))return json({error:'云端连接凭证无效'},401);
     if(!ready||closing||!lease.held())return json({error:'云端执行器尚未就绪'},503);
     if(request.headers.has('Origin')&&(!publicOrigin||request.headers.get('Origin')!==publicOrigin))return json({error:'请求来源不匹配'},403);
-    if(url.pathname==='/api/status'&&request.method==='GET')return json({product:'novel-factory-cloud',protocol:1,serverId:secret.serverId,version:'0.11.1',workerReady:true,lastTick,execution:'independent-server',requiresPhone:false});
+    if(url.pathname==='/api/status'&&request.method==='GET')return json({product:'novel-factory-cloud',protocol:1,serverId:secret.serverId,version:'0.12.1',workerReady:true,lastTick,execution:'independent-server',requiresPhone:false});
     if(url.pathname!=='/api/workspace'||!['GET','POST'].includes(request.method))return json({error:'接口不存在'},404);
     if(request.headers.get('X-Novel-Server-Id')!==secret.serverId)return json({error:'服务器身份已变化，请重新核对连接；本次未执行操作'},409);
     const headers=new Headers({'Content-Type':'application/json'});

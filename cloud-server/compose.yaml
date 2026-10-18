@@ -16,7 +16,7 @@ services:
       timeout: 5s
       retries: 16
       start_period: 15s
-    stop_grace_period: 150s
+    stop_grace_period: 350s
   caddy:
     image: caddy:2
     restart: unless-stopped

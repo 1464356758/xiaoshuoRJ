@@ -18,6 +18,24 @@ async function configured(service,directory){const x=JSON.parse(await readFile(j
 async function book(service,total=3){return createBook(service.store,{title:'SYNTHETIC ONLY / cloud protocol',totalChapters:total,targetWords:1000,budget:20},crypto.randomUUID());}
 async function until(check){const limit=Date.now()+6000;while(Date.now()<limit){if(await check())return;await new Promise(r=>setTimeout(r,10));}throw new Error('SYNTHETIC cloud test deadline');}
 
+test('长模型调用等待期间独立心跳持续更新，手机读取不会将执行器误判离线',async()=>{
+  let release,entered=false,calls=0;const gate=new Promise(r=>release=r);
+  const x=await setup({leaseDuration:300,invoke:async(...args)=>{calls++;entered=true;await gate;return craftFixture(...args);}});
+  let running;
+  try{
+    await configured(x.service,x.directory);const b=await book(x.service);await startJob(x.service.store,b.id,3);
+    running=x.service.tick();await until(()=>entered);
+    const headers=await authorization(x.directory,x.service);
+    const status=async()=>await (await x.service.dispatch(new Request('https://cloud.example/api/status',{headers}))).json();
+    await until(async()=>!!(await status()).lastTick);const before=(await status()).lastTick;
+    await until(async()=>(await status()).lastTick>before);
+    const snapshot=await (await x.service.dispatch(new Request('https://cloud.example/api/workspace',{headers}))).json();
+    assert.ok(Date.now()-Date.parse(snapshot.runner.lastTick)<1000);
+    assert.equal(snapshot.jobs[0].status,'running');assert.equal(calls,1);
+    release();await running;
+  }finally{release();await running;await x.cleanup();}
+});
+
 test('独立HTTP不信任GPT身份头，只有有效连接凭证可读私有数据',async()=>{const x=await setup();try{const a=await x.service.listen(0),base='http://127.0.0.1:'+a.port,headers=await authorization(x.directory,x.service);
   assert.equal((await fetch(base+'/healthz')).status,200);assert.equal((await fetch(base+'/api/workspace',{headers:{'oai-authenticated-user-id':'independent-cloud-owner'}})).status,401);
   assert.equal((await fetch(base+'/api/status',{headers})).status,200);const r=await fetch(base+'/api/workspace',{headers}),data=await r.json();assert.equal(r.status,200);assert.equal(data.settings.spendEnabled,false);assert.equal('apiKeyEncrypted'in data.settings,false);assert.equal(JSON.stringify(data).includes(headers.Authorization.slice(7)),false);
