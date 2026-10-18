@@ -23,7 +23,7 @@ test('DeepSeek结构请求显式保留低强度思考和JSON模式，正文与�
 });
 
 test('长章节结构输出不再被6000/8000预设截断，仍遵守用户token上限和费用预留',async()=>{
-  for(const role of ['plan','plan_batch','contract','review','opening_review','arc_review']){
+  for(const role of ['plan','plan_batch','contract','review','opening_review','arc_review','repair']){
     assert.equal(callSpec(defaults,'SYNTHETIC JSON',role).maxTokens,16000);
     assert.equal(callSpec({...defaults,maxOutputTokens:3000},'SYNTHETIC JSON',role).maxTokens,3000);
   }
