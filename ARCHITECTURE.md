@@ -1,5 +1,7 @@
 # AI商业小说工厂｜V0.9 架构
 
+0.13.0恢复操作：控制台按最早blocked章节切换“查看审核与修改”，新ChapterRecovery集中展示全文评分、minor/major及fix。startEditorRevision创建归属当前作品的持久编辑请求，绑定sourceHash、设置/大纲/文风版本；nonce幂等防重复支付。job携带请求ID，worker先调用一次原作者rewrite，再走原全文review、质量门及后续目标。编辑请求独立于自动局部repair计数，不重置attempt，保留历史稿和失败候选。请求登记后不依赖手机前台；失败、未知、暂停均不自动重放。新UI需安卓0.13.0，原控制协议继续兼容。
+
 后端0.12.7：triggerQuoteId只在人物earned_change时必填，其他状态的空值兼容；全部必填证据和触发依据仍严格验证。免费审核复验同步非活动job的实际质量结果，避免陈旧格式错误。repairPrompt包含真实scores原因和minor问题，不只提供SCORE通用描述；三轮/范围/预算和原质量门保持。
 后端0.12.6：review-evidence为当前章生成E编号、实际旧稿片段生成带章号/hash/起点的H编号，模型选择编号，程序恢复来源内精确文本。未知编号、跨来源、编号与显式引用冲突拒绝；不改写原稿、不缩放分数。旧正确逐字引用兼容。审核候选包含sourceHash，acceptReviewCandidate在租约、所属章节、上下文、当前hash和免费预检保护下复验保存的响应，仍经过全文事实/叙事/手艺/评分门，不新增模型调用。
 后端0.12.5：修订锚点以非空、逐字唯一和范围安全为边界，兼容snake_case，冲突别名拒绝。step对已解析响应保留私有modelCandidate及配置/大纲/文风/平台上下文，领域校验失败也不丢失结果。acceptRepairCandidate仅复用当前所属章节已存完整repair响应，检查点租约、hash和上下文均核验，旧版本保留，状态进入reviewing；不调用模型、不增加或重置返修轮次，不跳过全文审核。

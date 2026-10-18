@@ -45,7 +45,7 @@ export async function createCloudService({directory,publicOrigin=null,invoke,int
     if(!authorize(request.headers.get('Authorization'),secret.controlToken))return json({error:'云端连接凭证无效'},401);
     if(!ready||closing||!lease.held())return json({error:'云端执行器尚未就绪'},503);
     if(request.headers.has('Origin')&&(!publicOrigin||request.headers.get('Origin')!==publicOrigin))return json({error:'请求来源不匹配'},403);
-    if(url.pathname==='/api/status'&&request.method==='GET')return json({product:'novel-factory-cloud',protocol:1,serverId:secret.serverId,version:'0.12.7',workerReady:true,lastTick,execution:'independent-server',requiresPhone:false});
+    if(url.pathname==='/api/status'&&request.method==='GET')return json({product:'novel-factory-cloud',protocol:1,serverId:secret.serverId,version:'0.12.8',workerReady:true,lastTick,execution:'independent-server',requiresPhone:false});
     if(url.pathname!=='/api/workspace'||!['GET','POST'].includes(request.method))return json({error:'接口不存在'},404);
     if(request.headers.get('X-Novel-Server-Id')!==secret.serverId)return json({error:'服务器身份已变化，请重新核对连接；本次未执行操作'},409);
     const headers=new Headers({'Content-Type':'application/json'});

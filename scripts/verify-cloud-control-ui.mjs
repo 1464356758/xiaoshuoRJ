@@ -6,11 +6,12 @@ import {mkdtemp,readFile,rm,mkdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {buildServer} from '../cloud-server/build-server.mjs';
-import {createBook,config,settings} from '../lib/engine.mjs';
+import {createBook,config,settings,step} from '../lib/engine.mjs';
 import {startJob,pauseJob} from '../lib/jobs.mjs';
 import {seal} from '../lib/model.mjs';
 import {resolveModel} from '../lib/model-routing.mjs';
 import {craftFixture} from '../tests/craft-support.mjs';
+import {synthetic} from '../tests/workflow-support.mjs';
 const modules=process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES;
 const {chromium}=await import(modules?modules+'/playwright/index.mjs':'playwright');
 await buildServer();
@@ -27,11 +28,11 @@ await new Promise(resolve=>http.listen(0,'127.0.0.1',resolve));
 const base='http://127.0.0.1:'+http.address().port;
 let passed=0;
 async function until(check){const end=Date.now()+5000;while(Date.now()<end){if(await check())return;await new Promise(r=>setTimeout(r,5));}throw new Error('SYNTHETIC condition deadline');}
-async function scenario(name,fn,{seed=false,withBook=false,width=390,height=844}={}){
+async function scenario(name,fn,{seed=false,withBook=false,width=390,height=844,rewrite=false}={}){
   if(process.env.NOVEL_UI_CASE&&!name.includes(process.env.NOVEL_UI_CASE))return;
   const directory=await mkdtemp(join(work,'case-'));
   let simulatedCalls=0;
-  const service=await createCloudService({directory,autoStart:false,invoke:async(...args)=>{simulatedCalls++;return craftFixture(...args);}});
+  const service=await createCloudService({directory,autoStart:false,invoke:async(...args)=>{simulatedCalls++;if(rewrite&&args[4]==='rewrite')return {text:synthetic(878,1000)};return craftFixture(...args);}});
   const secrets=JSON.parse(await readFile(join(directory,'server-secrets.json'),'utf8'));
   const headers={Authorization:'Bearer '+secrets.controlToken,'X-Novel-Server-Id':service.serverId,'Content-Type':'application/json'};
   if(seed)await settings(service.store,{apiKey:'SYNTHETIC_SAVED_KEY_NOT_REAL',spendEnabled:true},secrets.encryptionKey);
@@ -53,7 +54,7 @@ async function scenario(name,fn,{seed=false,withBook=false,width=390,height=844}
         const r=await service.dispatch(new Request('https://cloud.example'+path,{method,headers,...(method==='POST'?{body}:{})}));
         result={status:r.status,body:await r.text(),headers:Object.fromEntries(r.headers)};
         if(action==='settings'&&r.ok&&faults.failReadback)faults.failNextRead=true;
-        if(action==='settings'&&r.ok&&faults.holdSaveReply)await new Promise(resolve=>faults.release=resolve);
+        if(r.ok&&((action==='settings'&&faults.holdSaveReply)||(action==='startEditorRevision'&&faults.holdRevisionReply)))await new Promise(resolve=>faults.release=resolve);
       }
       await page.evaluate(({id,result})=>window.__novelCloudResult(id,JSON.stringify(result)),{id,result});
     });
@@ -62,7 +63,7 @@ async function scenario(name,fn,{seed=false,withBook=false,width=390,height=844}
       window.NovelCloud={connectionInfo:()=>JSON.stringify(window.syntheticProfile),request:(...args)=>void window.syntheticNativeRequest(...args),cancelRequest(){},exportDocument(){},copyText(){},openExternal(){},connect(id,origin,token){void window.syntheticConnect(origin,token).then(result=>{if(result.status===200){const status=JSON.parse(result.body);window.syntheticProfile={connected:true,origin,serverId:status.serverId};}window.__novelCloudResult(id,JSON.stringify(result));});}};
     },{connected});
     await page.goto(base+'/?view='+view);
-    if(connected&&!initialFailure)await page.getByRole('heading',{name:view==='settings'?'模型与费用上限':book?.title||'从一部好故事开始',exact:true}).waitFor();
+    if(connected&&!initialFailure)await page.getByRole('heading',{name:view==='settings'?'模型与费用上限':book?(await service.store.get(book.id)).title:'从一部好故事开始',exact:true}).waitFor();
     return page;
   }
   async function save(page){await page.getByRole('button',{name:'保存模型配置',exact:true}).click();await page.locator('.model-save-bar').getByText(/已保存。/).waitFor();}
@@ -139,5 +140,38 @@ try{
  for(const [width,height] of [[360,720],[430,932],[390,400]])await scenario('phone layout '+width+'x'+height+': save and error feedback remain visible',async x=>{
   const page=await x.open();await page.getByRole('radio',{name:/按角色分别设置/}).check();await page.getByRole('checkbox',{name:'允许模型调用费用',exact:true}).check();await page.getByRole('button',{name:'保存模型配置',exact:true}).click();const alert=page.locator('.model-save-bar').getByRole('alert');await alert.waitFor();const box=await alert.boundingBox();assert.ok(box.y>=0&&box.y+box.height<=height);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await mkdir(new URL('../test-results/',import.meta.url),{recursive:true});await page.screenshot({path:new URL('../test-results/model-form-'+width+'.png',import.meta.url).pathname});
  },{width,height});
+
+ await scenario('blocked review -> visible editing and full feedback -> queued revision -> phone closed -> review -> original target',async x=>{
+  let chapter;
+  for(let i=0;i<45;i++){
+    const result=await step(x.service.store,x.book.id,x.secrets.encryptionKey,craftFixture);
+    chapter=result.chapter;if(chapter?.status==='reviewing')break;
+  }
+  assert.equal(chapter.status,'reviewing');
+  await startJob(x.service.store,x.book.id,3);await pauseJob(x.service.store,x.book.id);
+  const currentBook=await x.service.store.get(x.book.id);
+  const review=await craftFixture(x.service.store,await config(x.service.store),currentBook,'SYNTHETIC review','review');
+  review.scores.commercial.score=5;review.issues=[{severity:'minor',message:'SYNTHETIC visible minor feedback',quote:chapter.content.slice(0,12),fix:'SYNTHETIC visible suggested edit'}];
+  chapter=await x.service.store.save(chapter,{...chapter,status:'blocked',attempt:3,review,gate:{pass:false,score:76,issues:[{code:'SCORE',message:'SYNTHETIC below 85'}]}});
+  const originalHash=chapter.hash;
+  const page=await x.open({view:'dashboard'});await page.getByRole('button',{name:'查看审核与修改',exact:true}).click();
+  const panel=page.getByRole('region',{name:'审核与修改',exact:true});await panel.waitFor();
+  await panel.getByText('SYNTHETIC visible minor feedback',{exact:true}).waitFor();await panel.getByText('修改建议：SYNTHETIC visible suggested edit',{exact:true}).waitFor();
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await mkdir(new URL('../test-results/',import.meta.url),{recursive:true});await panel.screenshot({path:new URL('../test-results/chapter-recovery.png',import.meta.url).pathname});
+  assert.equal(x.counts('startJob'),0);await panel.getByRole('button',{name:'按审稿意见修订',exact:true}).click();
+  const dialog=page.getByRole('dialog');assert.equal(await dialog.getByLabel('补充修订要求（可选）',{exact:true}).inputValue(),'');
+  await dialog.evaluate(el=>Promise.all(el.getAnimations({subtree:true}).map(a=>a.finished.catch(()=>{}))));
+  await page.screenshot({path:new URL('../test-results/chapter-revision-dialog.png',import.meta.url).pathname});x.faults.holdRevisionReply=true;
+  await dialog.getByRole('button',{name:'生成一次修订稿并复审',exact:true}).click();await until(()=>x.faults.release);
+  const registering=dialog.getByRole('button',{name:'正在登记云端任务…',exact:true});assert.equal(await registering.isDisabled(),true);const box=await registering.boundingBox();await page.touchscreen.tap(box.x+box.width/2,box.y+box.height/2);assert.equal(x.counts('startEditorRevision'),1);x.faults.release();
+  await page.getByRole('button',{name:'云端正在运行',exact:true}).waitFor();
+  assert.equal(x.counts('startEditorRevision'),1);assert.equal((await x.service.store.get(chapter.id)).hash,originalHash);
+  assert.equal((await x.service.store.get(x.book.id+':job')).targetChapters,3);await page.close();
+  await x.service.tick();let revised=await x.service.store.get(chapter.id);assert.equal(revised.status,'reviewing');assert.equal(revised.attempt,3);assert.notEqual(revised.hash,originalHash);
+  for(let i=0;i<100&&(await x.service.store.get(x.book.id+':job')).status!=='completed';i++)await x.service.tick();
+  assert.equal((await x.service.store.get(x.book.id+':job')).status,'completed');assert.equal((await x.service.store.list('chapter',x.book.id)).filter(c=>c.status==='locked').length,3);
+  assert.equal((await x.service.store.list('editorRevision',x.book.id))[0].status,'completed');assert.ok((await x.service.store.list('version',x.book.id)).some(v=>v.hash===originalHash));
+  const reopened=await x.open({view:'dashboard'});await reopened.getByRole('heading',{name:'全书已完成',exact:true}).waitFor();assert.ok(await reopened.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+ },{seed:true,withBook:true,rewrite:true});
  console.log('UI AUDIT PASSED: '+passed+' scenarios; real supplier requests: 0; assets: '+(process.env.NOVEL_TEST_APK?'delivered APK':'source build'));
 }finally{await browser.close();await new Promise(resolve=>http.close(resolve));await rm(work,{recursive:true,force:true});}
