@@ -7,10 +7,10 @@ import {settings,saveChapter} from '../lib/engine.mjs';
 import {Store} from '../lib/store.mjs';
 import {modelCall} from '../lib/model.mjs';
 
-async function blocked(){
+async function blocked(attempt=2){
   const s=fresh(),b=await book(s),secret=await configured(s);
   let c=await writeOne(s,b);await startJob(s,b.id,3);await pauseJob(s,b.id);
-  c=await s.save(c,{...c,status:'blocked',attempt:3,gate:{pass:false,score:76,issues:[{code:'SCORE',message:'SYNTHETIC: 76, below 85'}]}});
+  c=await s.save(c,{...c,status:'blocked',attempt,gate:{pass:false,score:76,issues:[{code:'SCORE',message:'SYNTHETIC: 76, below 85'}]}});
   const input={id:c.id,revision:c.revision,baseHash:c.hash,key:crypto.randomUUID(),instruction:''};
   return {s,b,c,secret,input};
 }
@@ -23,6 +23,7 @@ test('explicit revision is durable, idempotent and reviewed before continuing th
   assert.equal((await s.list('editorRevision',b.id)).length,1);assert.equal((await s.get(c.id)).content,c.content);
   let rewrites=0,reviews=0;
   const invoke=async(...args)=>{if(args[4]==='rewrite'){rewrites++;assert.ok(args[3].includes('SYNTHETIC: 76, below 85'));}if(args[4]==='review')reviews++;return rewriting(...args);};
+  assert.equal((await runJobStep(s,b.id,secret,invoke)).phase,'revision_task');
   const r=await runJobStep(s,b.id,secret,invoke);assert.equal(r.phase,'editor_revision');
   const revised=await s.get(c.id);assert.equal(revised.status,'reviewing');assert.equal(revised.attempt,3);assert.notEqual(revised.hash,c.hash);
   assert.ok((await s.list('version',b.id)).some(v=>v.hash===c.hash&&v.content===c.content));
@@ -35,7 +36,7 @@ test('explicit revision is durable, idempotent and reviewed before continuing th
 });
 
 test('another failed audit stops at the unchanged automatic limit, with no fourth automatic repair',async()=>{
-  const {s,b,c,secret,input}=await blocked();await startEditorRevision(s,input);await runJobStep(s,b.id,secret,rewriting);
+  const {s,b,c,secret,input}=await blocked();await startEditorRevision(s,input);await runJobStep(s,b.id,secret,rewriting);await runJobStep(s,b.id,secret,rewriting);
   const roles=[];const invoke=async(...args)=>{roles.push(args[4]);const out=await fixture(...args);if(args[4]==='review')out.scores.commercial.score=5;return out;};
   await runJobStep(s,b.id,secret,invoke);assert.equal((await s.get(b.id+':job')).status,'blocked');assert.equal((await s.get(c.id)).attempt,3);
   for(let i=0;i<4;i++)await runJobStep(s,b.id,secret,invoke);
@@ -55,7 +56,7 @@ test('stale hash, revision, foreign owner, locked chapter and zero budget are re
 });
 
 test('manual saved edits can be resubmitted without a rewrite or resetting the repair cap',async()=>{
-  const {s,b,c,secret}=await blocked();const revised=await saveChapter(s,{id:c.id,revision:c.revision,title:c.title,content:synthetic(500,1000)});
+  const {s,b,c,secret}=await blocked(3);const revised=await saveChapter(s,{id:c.id,revision:c.revision,title:c.title,content:synthetic(500,1000)});
   assert.equal(revised.attempt,3);assert.equal(revised.status,'reviewing');await startJob(s,b.id,3);
   const result=await runJobStep(s,b.id,secret,fixture);assert.equal(result.phase,'review');assert.equal((await s.get(c.id)).status,'locked');
 });
@@ -63,7 +64,7 @@ test('manual saved edits can be resubmitted without a rewrite or resetting the r
 test('pause before execution retains the pending request; pause during execution saves once and stops before review',async()=>{
   const {s,b,c,secret,input}=await blocked();const j=await startEditorRevision(s,input);await pauseJob(s,b.id);
   assert.equal((await runJobStep(s,b.id,secret,rewriting)).advanced,false);assert.equal((await s.get(j.editorRevision)).status,'queued');
-  await startJob(s,b.id,3);let entered,release;const atCall=new Promise(r=>entered=r),wait=new Promise(r=>release=r);
+  await startJob(s,b.id,3);await runJobStep(s,b.id,secret,rewriting);let entered,release;const atCall=new Promise(r=>entered=r),wait=new Promise(r=>release=r);
   const running=runJobStep(s,b.id,secret,async(...args)=>{assert.equal(args[4],'rewrite');entered();await wait;return rewriting(...args);});
   await atCall;await pauseJob(s,b.id);release();await running;
   assert.equal((await s.get(b.id+':job')).status,'paused');assert.equal((await s.get(c.id)).status,'reviewing');
@@ -72,7 +73,7 @@ test('pause before execution retains the pending request; pause during execution
 
 test('incomplete or truncated paid response preserves the original and candidate; replay does not spend again',async()=>{
   for(const truncated of [false,true]){
-    const {s,b,c,secret,input}=await blocked();const job=await startEditorRevision(s,input);let calls=0;
+    const {s,b,c,secret,input}=await blocked();const job=await startEditorRevision(s,input);await runJobStep(s,b.id,secret,rewriting);let calls=0;
     const result=await runJobStep(s,b.id,secret,async()=>{calls++;if(truncated){const e=new Error('SYNTHETIC truncated response');e.modelResponse={raw:'SYNTHETIC partial',finishReason:'length'};throw e;}return {text:'SYNTHETIC incomplete'};});
     assert.equal(result.job.status,'blocked');const saved=await s.get(c.id);assert.equal(saved.content,c.content);assert.equal(saved.hash,c.hash);assert.equal(saved.attempt,3);assert.equal(saved.lease,null);assert.ok(saved.rewriteCandidate);
     assert.equal((await s.get(job.editorRevision)).status,'failed');assert.equal((await startEditorRevision(s,input)).duplicate,true);
@@ -90,4 +91,8 @@ test('real model budget reservation blocks an unaffordable rewrite before HTTP',
   const {s,b,c,secret,input}=await blocked();let current=await s.get(b.id);await s.save(current,{...current,budget:0.000001});await startEditorRevision(s,input);let http=0;
   const result=await runJobStep(s,b.id,secret,(...args)=>modelCall(...args,async()=>{http++;throw new Error('must not reach supplier');}));
   assert.equal(result.job.status,'blocked');assert.match(result.job.error,/预算|上限|额度不足/);assert.equal(http,0);assert.equal((await s.get(c.id)).content,c.content);assert.equal((await s.cost(b.id)).calls.length,0);
+});
+test('unchanged writer output stops before another paid review and preserves the draft',async()=>{
+  const {s,b,c,secret,input}=await blocked();await startEditorRevision(s,input);await runJobStep(s,b.id,secret,rewriting);const roles=[];
+  const result=await runJobStep(s,b.id,secret,async(...args)=>{roles.push(args[4]);return {text:c.content};});assert.equal(result.job.status,'blocked');assert.match(result.job.error,/未作实际修改/);assert.deepEqual(roles,['rewrite']);assert.equal((await s.get(c.id)).hash,c.hash);
 });

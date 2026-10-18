@@ -1,5 +1,9 @@
 # AI商业小说工厂｜V0.9 架构
 
+0.14控制/0.13后端：model-safety提供部署维护锁和按owner/book归属的HTTP AbortController，pause与费用关闭主动取消等待；model.mjs在预留及HTTP前核对停止状态，所有角色共享SQLite原子频率及章节费用门，异常熔断授权。维护锁在API动作入口及模型边界双重校验，GET永不派生模型调用。call-audit只读取owner所有账目（含测试及已移除作品），显式标注记录估算而非供应商账单。Docker复制独立运行所需safety模块，测试按最终COPY布局隔离启动。
+
+revision-director以现有评分/意见/引用建立问题ID，总监生成2000token内的任务，任务绑定正文hash、轮次和模型/计划/文风版本；写手及完整审稿独立检查点执行。新书自动返修和显式手动修订共用attempt，最多三轮；任务写入不改正文，写手成功后再复审，逐条revisionChecks必须有新稿原文证据。两轮未提高分数停止，原稿/付费候选保留；保存同稿不丢失原审核。维护锁保持，不部署后自动恢复。
+
 0.13.0恢复操作：控制台按最早blocked章节切换“查看审核与修改”，新ChapterRecovery集中展示全文评分、minor/major及fix。startEditorRevision创建归属当前作品的持久编辑请求，绑定sourceHash、设置/大纲/文风版本；nonce幂等防重复支付。job携带请求ID，worker先调用一次原作者rewrite，再走原全文review、质量门及后续目标。编辑请求独立于自动局部repair计数，不重置attempt，保留历史稿和失败候选。请求登记后不依赖手机前台；失败、未知、暂停均不自动重放。新UI需安卓0.13.0，原控制协议继续兼容。
 
 后端0.12.7：triggerQuoteId只在人物earned_change时必填，其他状态的空值兼容；全部必填证据和触发依据仍严格验证。免费审核复验同步非活动job的实际质量结果，避免陈旧格式错误。repairPrompt包含真实scores原因和minor问题，不只提供SCORE通用描述；三轮/范围/预算和原质量门保持。

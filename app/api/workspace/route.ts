@@ -8,6 +8,7 @@ import {snapshot,adoptPlatformRules,createBook,settings,step,saveChapter,unlockC
 import {startJob,startEditorRevision,pauseJob,runJobStep,runnerStatus} from '@/lib/jobs.mjs';
 import {hash} from '@/lib/store.mjs';
 import {callAudit} from '@/lib/call-audit.mjs';
+import {assertModelOutbound,modelOutboundDisabled} from '@/lib/model-safety.mjs';
 import {restoreBackup} from '@/lib/backup.mjs';
 import {submissionPacket,officialRuleSource,policyVerified} from '@/lib/acceptance.mjs';
 import {styleWorkbench,saveStyleReference,archiveStyleReference,createStyleTask,stepStyleTask,pauseStyleTask,activateStyle} from '@/lib/style-workbench.mjs';
@@ -30,7 +31,7 @@ export async function GET(request:Request) {
     if(q.get('chapter')) {const c=await store.get(q.get('chapter'));if(!c||c.kind!=='chapter')return reply({error:'章节不存在'},404);return reply({chapter:c,versions:await store.list('version',c.parent)});}
     if(q.get('export'))return new Response(await exportBook(store,q.get('export'),q.get('draft')==='1'),{headers:{'Content-Type':'text/plain;charset=utf-8','Content-Disposition':'attachment; filename="novel.txt"','Cache-Control':'no-store'}});
     if(q.get('backup')) {const id=q.get('backup');const book=await store.get(id);if(!book||book.kind!=='book')return reply({error:'作品不存在'},404);const cs=await store.list('chapter',id);return reply({format:'novel-factory-backup-v1',book,chapters:cs,versions:await store.list('version',id),planVersions:await store.list('planVersion',id),audits:await store.list('audit',id),styleReferences:await store.list('styleReference',id),styleProfiles:await store.list('styleProfile',id),styleTasks:await store.list('styleTask',id),exportedAt:new Date().toISOString()});}
-    return reply({...await snapshot(store,q.get('book')),runner:{...await runnerStatus(store.db),enabled:runnerEnabled}});
+    return reply({...await snapshot(store,q.get('book')),runner:{...await runnerStatus(store.db),enabled:runnerEnabled,modelApiDisabled:modelOutboundDisabled()}});
   }catch(e:any){return reply({error:e.message},e.message.includes('登录')?401:503);}
 }
 export async function POST(request:Request) {
@@ -38,6 +39,7 @@ export async function POST(request:Request) {
     const origin=request.headers.get('Origin');if(origin&&origin!==new URL(request.url).origin)return reply({error:'请求来源不匹配'},403);
     if(Number(request.headers.get('content-length')||0)>16000000)return reply({error:'请求过大'},413);
     const {store,secret,runnerEnabled}=resources(request);const x:any=await request.json();if(JSON.stringify(x).length>16000000)throw new Error('请求过大');let result;
+    if(['step','startJob','startEditorRevision','runJob','revise','openingAudit','testConnection','githubAssist','styleTaskStep'].includes(x.action))assertModelOutbound();
     if(x.action==='create')result=await createBook(store,x.input,x.key);
     else if(x.action==='styleReference')result=await saveStyleReference(store,x.id,x.input);
     else if(x.action==='styleArchive')result=await archiveStyleReference(store,x.id,x.key,x.archived);

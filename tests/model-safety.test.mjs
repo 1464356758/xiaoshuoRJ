@@ -20,6 +20,13 @@ test('pause aborts the actual pending model transport and preserves an uncertain
   const running=modelCall(s,await config(s),b,'SYNTHETIC','plan',secret,async(_url,options)=>{signal=options.signal;entered();return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));});
   const stopped=assert.rejects(running,/本人已停止/);await ready;await pauseJob(s,b.id);await stopped;assert.equal(signal.aborted,true);assert.equal((await s.cost(b.id)).calls[0].status,'uncertain');
 });
+test('a request registered during the stop transaction is also cancelled before stop returns',{timeout:2000},async()=>{
+  const s=fresh(),b=await book(s),secret=await configured(s),cfg=await config(s),save=s.save.bind(s);let pending,check,signal;
+  s.save=async(record,value)=>{if(record.id===b.id&&value.status==='paused'){
+    let entered;const ready=new Promise(r=>entered=r);pending=modelCall(s,cfg,b,'SYNTHETIC','plan',secret,async(_u,opt)=>{signal=opt.signal;entered();return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));});check=assert.rejects(pending,/本人已停止/);await ready;
+  }return save(record,value);};
+  await pauseJob(s,b.id);await check;assert.equal(signal.aborted,true);
+});
 
 test('disabling spending aborts in-flight calls for all books of the same owner',async()=>{
   const s=fresh(),a=await book(s),b=await book(s),secret=await configured(s),cfg=await config(s);const signals=[];let entered;const ready=new Promise(r=>entered=r);

@@ -114,7 +114,7 @@ try{
   const page=await x.open();await page.getByRole('radio',{name:/按角色分别设置/}).check();await page.getByLabel('正文API密钥',{exact:true}).fill('SYNTHETIC_CACHED_WRITER');await page.getByLabel('审核API密钥',{exact:true}).fill('SYNTHETIC_CACHED_REVIEW');await page.getByRole('radio',{name:/一把密钥/}).check();await page.getByRole('radio',{name:/按角色分别设置/}).check();assert.equal(await page.getByLabel('正文API密钥',{exact:true}).inputValue(),'SYNTHETIC_CACHED_WRITER');assert.equal(await page.getByLabel('审核API密钥',{exact:true}).inputValue(),'SYNTHETIC_CACHED_REVIEW');await page.getByRole('checkbox',{name:'允许模型调用费用',exact:true}).check();await page.getByRole('radio',{name:/按角色分别设置/}).check();assert.equal(await page.getByRole('checkbox',{name:'允许模型调用费用',exact:true}).isChecked(),true);
  });
  await scenario('running task locks model changes; pause and continue remain explicit',async x=>{
-  await startJob(x.service.store,x.book.id,3);const page=await x.open();assert.equal(await page.getByLabel('API密钥',{exact:true}).isDisabled(),true);assert.equal(await page.getByRole('button',{name:'保存模型配置',exact:true}).isDisabled(),true);await x.back(page);await page.getByRole('button',{name:'暂停',exact:true}).click();await page.getByRole('button',{name:'继续云端创作',exact:true}).waitFor();assert.equal((await x.service.store.get(x.book.id+':job')).status,'paused');await page.getByRole('button',{name:'继续云端创作',exact:true}).click();await page.getByRole('button',{name:'云端正在运行',exact:true}).waitFor();assert.equal((await x.service.store.get(x.book.id+':job')).status,'queued');
+  await startJob(x.service.store,x.book.id,3);const page=await x.open();assert.equal(await page.getByLabel('API密钥',{exact:true}).isDisabled(),true);assert.equal(await page.getByRole('button',{name:'保存模型配置',exact:true}).isDisabled(),true);await x.back(page);await page.getByRole('button',{name:'停止任务',exact:true}).click();await page.getByRole('button',{name:'继续云端创作',exact:true}).waitFor();assert.equal((await x.service.store.get(x.book.id+':job')).status,'paused');await page.getByRole('button',{name:'继续云端创作',exact:true}).click();await page.getByRole('button',{name:'云端正在运行',exact:true}).waitFor();assert.equal((await x.service.store.get(x.book.id+':job')).status,'queued');
  },{seed:true,withBook:true});
  await scenario('zero budget stops before registering a task',async x=>{
   await settings(x.service.store,{monthLimit:0},x.secrets.encryptionKey);const page=await x.open();await x.back(page);await page.getByRole('button',{name:'启动云端自动创作',exact:true}).click();await page.getByRole('heading',{name:'模型与费用上限',exact:true}).waitFor();assert.equal(x.counts('startJob'),0);assert.match(await page.locator('.model-save-bar').innerText(),/预算|费用上限/);
@@ -152,7 +152,7 @@ try{
   const currentBook=await x.service.store.get(x.book.id);
   const review=await craftFixture(x.service.store,await config(x.service.store),currentBook,'SYNTHETIC review','review');
   review.scores.commercial.score=5;review.issues=[{severity:'minor',message:'SYNTHETIC visible minor feedback',quote:chapter.content.slice(0,12),fix:'SYNTHETIC visible suggested edit'}];
-  chapter=await x.service.store.save(chapter,{...chapter,status:'blocked',attempt:3,review,gate:{pass:false,score:76,issues:[{code:'SCORE',message:'SYNTHETIC below 85'}]}});
+  chapter=await x.service.store.save(chapter,{...chapter,status:'blocked',attempt:2,review,gate:{pass:false,score:76,issues:[{code:'SCORE',message:'SYNTHETIC below 85'}]}});
   const originalHash=chapter.hash;
   const page=await x.open({view:'dashboard'});await page.getByRole('button',{name:'查看审核与修改',exact:true}).click();
   const panel=page.getByRole('region',{name:'审核与修改',exact:true});await panel.waitFor();
@@ -162,16 +162,25 @@ try{
   const dialog=page.getByRole('dialog');assert.equal(await dialog.getByLabel('补充修订要求（可选）',{exact:true}).inputValue(),'');
   await dialog.evaluate(el=>Promise.all(el.getAnimations({subtree:true}).map(a=>a.finished.catch(()=>{}))));
   await page.screenshot({path:new URL('../test-results/chapter-revision-dialog.png',import.meta.url).pathname});x.faults.holdRevisionReply=true;
-  await dialog.getByRole('button',{name:'生成一次修订稿并复审',exact:true}).click();await until(()=>x.faults.release);
+  await dialog.getByRole('button',{name:'生成修改任务并修订复审',exact:true}).click();await until(()=>x.faults.release);
   const registering=dialog.getByRole('button',{name:'正在登记云端任务…',exact:true});assert.equal(await registering.isDisabled(),true);const box=await registering.boundingBox();await page.touchscreen.tap(box.x+box.width/2,box.y+box.height/2);assert.equal(x.counts('startEditorRevision'),1);x.faults.release();
   await page.getByRole('button',{name:'云端正在运行',exact:true}).waitFor();
   assert.equal(x.counts('startEditorRevision'),1);assert.equal((await x.service.store.get(chapter.id)).hash,originalHash);
   assert.equal((await x.service.store.get(x.book.id+':job')).targetChapters,3);await page.close();
-  await x.service.tick();let revised=await x.service.store.get(chapter.id);assert.equal(revised.status,'reviewing');assert.equal(revised.attempt,3);assert.notEqual(revised.hash,originalHash);
+  await x.service.tick();await x.service.tick();let revised=await x.service.store.get(chapter.id);assert.equal(revised.status,'reviewing');assert.equal(revised.attempt,3);assert.notEqual(revised.hash,originalHash);
   for(let i=0;i<100&&(await x.service.store.get(x.book.id+':job')).status!=='completed';i++)await x.service.tick();
   assert.equal((await x.service.store.get(x.book.id+':job')).status,'completed');assert.equal((await x.service.store.list('chapter',x.book.id)).filter(c=>c.status==='locked').length,3);
   assert.equal((await x.service.store.list('editorRevision',x.book.id))[0].status,'completed');assert.ok((await x.service.store.list('version',x.book.id)).some(v=>v.hash===originalHash));
   const reopened=await x.open({view:'dashboard'});await reopened.getByRole('heading',{name:'全书已完成',exact:true}).waitFor();assert.ok(await reopened.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
  },{seed:true,withBook:true,rewrite:true});
+
+ await scenario('maintenance lock is visible, disables creation and key entry, and never calls the supplier',async x=>{
+  const previous=process.env.NOVEL_MODEL_API_DISABLED;process.env.NOVEL_MODEL_API_DISABLED='1';
+  try{
+   const page=await x.open({view:'dashboard'});await page.getByText('模型接口维护停用：所有创作、修订、审核及连接测试均被服务端拦截。可以查看与导出已有稿件，请勿重新填入密钥启动。',{exact:true}).waitFor();
+   assert.equal(await page.getByRole('button',{name:'启动云端自动创作',exact:true}).isDisabled(),true);assert.equal(x.counts('startJob'),0);
+   const settingsPage=await x.open();assert.equal(await settingsPage.getByLabel('API密钥',{exact:true}).isDisabled(),true);assert.equal(await settingsPage.getByRole('button',{name:'保存模型配置',exact:true}).isDisabled(),true);assert.equal(x.simulated(),0);
+  }finally{if(previous===undefined)delete process.env.NOVEL_MODEL_API_DISABLED;else process.env.NOVEL_MODEL_API_DISABLED=previous;}
+ },{seed:true,withBook:true});
  console.log('UI AUDIT PASSED: '+passed+' scenarios; real supplier requests: 0; assets: '+(process.env.NOVEL_TEST_APK?'delivered APK':'source build'));
 }finally{await browser.close();await new Promise(resolve=>http.close(resolve));await rm(work,{recursive:true,force:true});}

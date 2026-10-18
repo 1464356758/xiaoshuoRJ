@@ -8,13 +8,13 @@ import {modelSettingsDirty,modelSettingsGaps,roleHasKey,sharedRoleDraft} from '@
 const roles=[['writer','正文'],['review','审核']] as const;
 const number=(value:string)=>value===''?null:Number(value);
 
-export default function ModelSettingsPanel({cfg,saved,apiKey,onApiKey,keys,onKeys,onChange,onSave,onReload,onTest,onDashboard,message,busy,active}:any){
+export default function ModelSettingsPanel({cfg,saved,apiKey,onApiKey,keys,onKeys,onChange,onSave,onReload,onTest,onDashboard,message,busy,active,maintenance=false}:any){
   const cached=useRef<any>({});
   useEffect(()=>{cached.current={};},[saved.revision]);
   const allKeys={planner:apiKey,...keys};
   const dirty=modelSettingsDirty(cfg,saved,allKeys),gaps=modelSettingsGaps(cfg,saved,allKeys);
   const shared=!cfg.writerProvider&&!cfg.reviewProvider;
-  const locked=busy||active;
+  const locked=busy||active||maintenance;
   function edit(patch:any,reviewFee=false){onChange({...cfg,...patch,...(reviewFee?{spendEnabled:false}:{})});}
   function mode(value:string){
     if((value==='shared')===shared)return;
@@ -47,6 +47,7 @@ export default function ModelSettingsPanel({cfg,saved,apiKey,onApiKey,keys,onKey
   }
   return <section className="card model-settings-panel" aria-label="模型配置表单">
     <div className="model-form-summary" role="status"><strong>{dirty?'有未保存的模型配置':'当前显示云端已保存的配置'}</strong><p>① 填写模型与密钥　② 核对费用　③ 保存后返回创作控制台</p><p>策划：{status('planner')} · 正文：{status('writer')} · 审核：{status('review')}</p></div>
+    {maintenance&&<p className="model-form-alert" role="status">模型接口维护停用。密钥与费用设置已锁定，仍可读取已保存结果。</p>}
     {active&&<p className="model-form-alert" role="status">云端任务正在执行。请返回创作控制台暂停，再修改模型或测试连接。</p>}
     <fieldset disabled={locked} className="model-form-fields">
       <legend>密钥使用方式</legend>
