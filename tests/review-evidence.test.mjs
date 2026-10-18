@@ -17,6 +17,9 @@ test('证据目录覆盖全部原文，编号还原精确片段，旧章编号�
     {quoteId:'E9999'}, {quoteId:sourceId}, {quoteId:rows[0].id,quote:'SYNTHETIC paraphrased'},
     {antiLoop:{comparisons:[{chapter:3,pastQuoteId:sourceId}]}}
   ])assert.throws(()=>hydrateReviewEvidence(bad,{content:text},{source:[source]}),/编号|冲突/);
+  assert.deepEqual(hydrateReviewEvidence({status:'consistent',quoteId:rows[0].id,triggerQuoteId:null},{content:text},{}),{status:'consistent',quote:rows[0].quote});
+  assert.throws(()=>hydrateReviewEvidence({status:'earned_change',quoteId:rows[0].id,triggerQuoteId:null},{content:text},{}),/编号/);
+  assert.throws(()=>hydrateReviewEvidence({quoteId:null},{content:text},{}),/编号/);
 });
 
 async function reviewing(s){
@@ -55,9 +58,9 @@ test('已保存完整审核可免费重验且不跳过质量门，陈旧稿、�
       if(mode==='low_score')response.scores.commercial.score=8;
       const candidate={parsed:true,role:'review',response,sourceHash:mode==='hash'?'SYNTHETIC old hash':c.hash,bookId:b.id,chapterNumber:c.number,planRevision:b.planRevision||0,styleRevision:0,platformHash:null,configRevision:cfg.revision||0};
       if(mode==='context')candidate.planRevision++;
-      await s.save(c,{...c,attempt:3,modelCandidate:candidate});const before=await s.cost(b.id);
+      await s.save(c,{...c,attempt:3,modelCandidate:candidate});await s.create('job',{status:'blocked',error:'SYNTHETIC old format error'},b.id,b.id+':job');const before=await s.cost(b.id);
       if(['hash','context','owner'].includes(mode))await assert.rejects(acceptReviewCandidate(mode==='owner'?new Store(s.db,'SYNTHETIC OTHER OWNER'):s,c.id),/不存在|完整审核|上下文/);
-      else {const result=await acceptReviewCandidate(s,c.id);assert.equal(result.chapter.status,mode==='valid'?'locked':'blocked');assert.equal(result.chapter.attempt,3);if(mode==='low_score')assert.ok(result.chapter.gate.issues.some(i=>i.code==='CORE_SCORE'));}
+      else {const result=await acceptReviewCandidate(s,c.id);assert.equal(result.chapter.status,mode==='valid'?'locked':'blocked');assert.equal(result.chapter.attempt,3);const job=await s.get(b.id+':job');if(mode==='low_score'){assert.ok(result.chapter.gate.issues.some(i=>i.code==='CORE_SCORE'));assert.match(job.error,/质量门未通过/);}else{assert.equal(job.status,'paused');assert.equal(job.error,null);}}
       const saved=await s.get(c.id);assert.equal(saved.content,c.content);assert.equal(saved.hash,await hash(c.content));assert.equal(saved.lease,null);assert.deepEqual(await s.cost(b.id),before);
     }finally{s.db.conn.close();}
   }

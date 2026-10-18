@@ -137,3 +137,15 @@ test('免费复用拒绝截断、旧上下文、旧哈希、歧义定位、执�
     }finally{s.db.conn.close();}
   }
 });
+
+test('仅总分不足时自动修订仍收到真实扣分原因和minor意见，保留原稿版本而不是猜修改目标',async()=>{
+  const s=fresh();try{
+    const {b,c}=await repairCandidateFixture(s);
+    await s.save(c,{...c,attempt:0,modelCandidate:null,repairIssues:[{code:'SCORE',message:'SYNTHETIC score below threshold'}],review:{scores:{causality:{score:15,reason:'SYNTHETIC motivation needs setup',quote:c.content.slice(0,30)}},issues:[{severity:'minor',message:'SYNTHETIC trust is unearned',fix:'SYNTHETIC show a costly choice',quote:c.content.slice(0,30)}]}});
+    const result=await step(s,b.id,'',async(st,cfg,bk,prompt,role)=>{
+      assert.equal(role,'repair');assert.match(prompt,/SYNTHETIC motivation needs setup/);assert.match(prompt,/SYNTHETIC trust is unearned/);assert.match(prompt,/SYNTHETIC show a costly choice/);assert.match(prompt,/不修改评分/);
+      return {baseHash:c.hash,patches:[{before:c.content.slice(0,24),after:synthetic(901,24)}],resolved:['SYNTHETIC score below threshold']};
+    });
+    assert.equal(result.chapter.attempt,1);assert.equal(result.chapter.status,'reviewing');assert.ok((await s.list('version',b.id)).some(v=>v.content===c.content));
+  }finally{s.db.conn.close();}
+});
