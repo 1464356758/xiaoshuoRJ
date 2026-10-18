@@ -22,6 +22,18 @@ test('DeepSeek结构请求显式保留低强度思考和JSON模式，正文与�
   assert.equal(callSpec({...defaults,provider:'qwen',model:'SYNTHETIC'},'JSON','plan').body.reasoning_effort,undefined);
 });
 
+test('长章节结构输出不再被6000/8000预设截断，仍遵守用户token上限和费用预留',async()=>{
+  for(const role of ['plan','plan_batch','contract','review','opening_review','arc_review']){
+    assert.equal(callSpec(defaults,'SYNTHETIC JSON',role).maxTokens,16000);
+    assert.equal(callSpec({...defaults,maxOutputTokens:3000},'SYNTHETIC JSON',role).maxTokens,3000);
+  }
+  const s=fresh(),b=await book(s),secret=await configured(s,{taskLimit:.01});let sent=0;
+  try{
+    await assert.rejects(modelCall(s,await config(s),b,'SYNTHETIC JSON','contract',secret,async()=>{sent++;}),/超过单次上限/);
+    assert.equal(sent,0);assert.equal((await s.cost(b.id)).calls.length,0);
+  }finally{s.db.conn.close();}
+});
+
 test('真实SQLite记录超时预留且不重发，创作和连接使用各自截止时间',async t=>{
   let deadline;
   t.mock.method(AbortSignal,'timeout',ms=>{deadline=ms;return new AbortController().signal;});

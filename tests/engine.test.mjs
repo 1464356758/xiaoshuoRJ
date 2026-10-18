@@ -92,7 +92,7 @@ test('100章规划先保存骨架，再10章一批，全书计划完整前不创
 });
 test('300章分批规划不会要求单次输出300项；最后不足10章按实际范围保存',async()=>{
   for(const total of [300,23]){const s=fresh(),b=await book(s,1000,total);let prompt='';await step(s,b.id,'',async(...a)=>{prompt=a[3];return batchedFixture(...a);});assert.match(prompt,/不输出逐章contracts/);for(let i=0;i<Math.ceil(total/10);i++)await step(s,b.id,'',batchedFixture);const saved=await s.get(b.id);assert.equal(saved.plan.contracts.length,total);assert.equal(saved.plan.contracts.at(-1).number,total);}
-  const spec=callSpec(defaults,'TEST ONLY','plan_batch');assert.equal(spec.maxTokens,6000);assert.equal(spec.model,defaults.model);
+  const spec=callSpec(defaults,'TEST ONLY','plan_batch');assert.equal(spec.maxTokens,16000);assert.equal(spec.model,defaults.model);
 });
 test('规划途中数据库重开，不重复骨架或已保存批次',async()=>{
   const dir=mkdtempSync(join(tmpdir(),'novel-planning-')),path=join(dir,'test.sqlite');let reopened;

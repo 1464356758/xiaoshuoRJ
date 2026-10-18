@@ -4,7 +4,29 @@ import assert from 'node:assert/strict';
 import {fresh} from './workflow-support.mjs';
 import {craftFixture} from './craft-support.mjs';
 import {createBook,step} from '../lib/engine.mjs';
+import {configured} from './workflow-support.mjs';
+import {modelCall} from '../lib/model.mjs';
 import {bindContractFacts} from '../lib/story-context.mjs';
+
+test('截断或无效JSON的付费响应保存在私有检查点，费用已知结算且不自动重发',async()=>{
+  for(const finishReason of ['length','stop']){
+    const s=fresh();try{
+      const b=await createBook(s,{title:'SYNTHETIC partial response',totalChapters:3,targetWords:1000},crypto.randomUUID());
+      const secret=await configured(s);await step(s,b.id,secret,craftFixture);let sent=0;
+      const partial='{"SYNTHETIC incomplete":';
+      await assert.rejects(step(s,b.id,secret,async(...args)=>modelCall(...args,async(url,options)=>{
+        sent++;assert.equal(JSON.parse(options.body).max_tokens,16000);
+        return Response.json({choices:[{message:{content:partial},finish_reason:finishReason}],usage:{prompt_tokens:10,completion_tokens:20}});
+      })),finishReason==='length'?/16000 token.*截断/:/JSON格式不完整/);
+      const c=(await s.list('chapter',b.id))[0];
+      assert.equal(c.status,'contract');assert.equal(c.content,'');assert.equal(c.lease,null);
+      assert.equal(c.modelCandidate.content,partial);assert.equal(c.modelCandidate.role,'contract');
+      assert.equal(c.modelCandidate.finishReason,finishReason);
+      assert.equal((await s.cost(b.id)).calls[0].status,'settled');
+      assert.equal(sent,1);assert.equal((await s.get(b.id)).plan.facts['权限'],'无');
+    }finally{s.db.conn.close();}
+  }
+});
 
 test('状态变化起点由当前账本精确填入，未知状态为null，不修改输入或覆盖旧协议显式起点',()=>{
   const input={requiredDelta:[{key:'SYNTHETIC known',to:'next'},{key:'SYNTHETIC new',to:'created'},{key:'SYNTHETIC legacy',from:'explicit',to:'next'}]};
