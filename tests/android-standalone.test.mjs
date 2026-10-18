@@ -26,7 +26,7 @@ function bridge(){
 }
 function fresh(){const native=bridge(),db=nativeDatabase(native);return {native,db,store:new Store(db,'android-personal')};}
 async function configured(store,extra={}){await settings(store,{apiKey:'SYNTHETIC ONLY / not a usable key',inputPrice:1,outputPrice:1,spendEnabled:true,bookLimit:100,monthLimit:100,taskLimit:2,...extra},secret);}
-async function book(store,total=3){return createBook(store,{title:'SYNTHETIC ONLY / device protocol',targetWords:1000,totalChapters:total,budget:20},crypto.randomUUID());}
+async function book(store,total=3){const b=await createBook(store,{title:'SYNTHETIC ONLY / device protocol',targetWords:1000,totalChapters:total,budget:20},crypto.randomUUID());return store.save(b,{...b,singleCallProtocol:0});}
 const routeSource=readFileSync(new URL('../app/api/workspace/route.ts',import.meta.url),'utf8');
 const compiled=await esbuild.transform(adaptRoute(routeSource).replaceAll('@/lib/',new URL('../lib/',import.meta.url).href),{loader:'ts',format:'esm'});
 const route=await import('data:text/javascript;base64,'+Buffer.from(compiled.code).toString('base64'));

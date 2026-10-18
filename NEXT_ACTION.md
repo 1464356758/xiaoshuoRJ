@@ -1,5 +1,15 @@
 # 下一步与恢复入口（独立云端已上线）
 
+## 本轮优先事项（旧三轮规则已被用户五审指令替代）
+
+1. 本轮单次正文/审核/返修及五审放行代码已完成，280项测试、TypeScript和APK23项界面场景通过。部署0.14.0到原Railway服务并观察终态SUCCESS，实际HTTPS验证版本、原UUID、modelApiDisabled=true。
+2. 与private-single-call-check/before-deploy.json做只读比较：原稿hash/8687字/78分/attempt3、原10章目标、配置revision4/spendEnabled=false及23条调用均不变。不要启动真实模型任务来验证。
+3. 保存同签名0.15.0 APK并交付；更新部署回执和校验值。未观察部署SUCCESS前不得称已上线；手机实机和真实文学质量未验收。
+4. 用户已删除旧Key，保持NOVEL_MODEL_API_DISABLED=1；没有新的明确恢复指令时不启用费用、不换模型、不抬预算、不启动旧任务。官方1600次/约50元与本服务23条/5.708349元差额未完成对账。
+
+## 以下为历史行动记录（与上述新要求冲突时以上述为准）
+
+
 ## 当前：后端0.13.0 / 安卓0.14.0，维护停用与总监返修重构
 
 用户已删除旧DeepSeek Key；云端配置revision4、spendEnabled=false。NOVEL_MODEL_API_DISABLED=1保持，任何创作、修订、审核、连接测试入口均维护拦截；禁止自动恢复费用、新Key或原任务。本轮只用合成模型夹具，0真实模型请求。

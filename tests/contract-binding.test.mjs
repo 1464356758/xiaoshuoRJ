@@ -64,7 +64,7 @@ test('错误的显式起点仍拒绝，保留未通过的候选且不覆盖既�
     assert.equal(c.contractCandidate.response.requiredDelta[0].from,'SYNTHETIC false past');
     assert.match(c.contractCandidate.error,/事实不一致/);
     assert.equal(calls,1);assert.deepEqual((await s.get(b.id)).plan,before.plan);
-    const resumed=await step(s,b.id,'',craftFixture);assert.equal(resumed.phase,'contract');
-    assert.equal(resumed.chapter.contractCandidate,null);
+    await assert.rejects(step(s,b.id,'',async(...a)=>{calls++;return craftFixture(...a);}),/已经发送过一次请求/);assert.equal(calls,1);
+    assert.equal((await s.get(c.id)).contractCandidate.response.requiredDelta[0].from,'SYNTHETIC false past');
   }finally{s.db.conn.close();}
 });

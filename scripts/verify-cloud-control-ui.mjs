@@ -28,11 +28,11 @@ await new Promise(resolve=>http.listen(0,'127.0.0.1',resolve));
 const base='http://127.0.0.1:'+http.address().port;
 let passed=0;
 async function until(check){const end=Date.now()+5000;while(Date.now()<end){if(await check())return;await new Promise(r=>setTimeout(r,5));}throw new Error('SYNTHETIC condition deadline');}
-async function scenario(name,fn,{seed=false,withBook=false,width=390,height=844,rewrite=false}={}){
+async function scenario(name,fn,{seed=false,withBook=false,width=390,height=844,rewrite=false,lowReview=false}={}){
   if(process.env.NOVEL_UI_CASE&&!name.includes(process.env.NOVEL_UI_CASE))return;
   const directory=await mkdtemp(join(work,'case-'));
-  let simulatedCalls=0;
-  const service=await createCloudService({directory,autoStart:false,invoke:async(...args)=>{simulatedCalls++;if(rewrite&&args[4]==='rewrite')return {text:synthetic(878,1000)};return craftFixture(...args);}});
+  let simulatedCalls=0;const simulatedRoles=[];
+  const service=await createCloudService({directory,autoStart:false,invoke:async(...args)=>{simulatedCalls++;simulatedRoles.push(args[4]);if(rewrite&&args[4]==='rewrite'){const c=(await args[0].list('chapter',args[2].id)).find(c=>c.status!=='locked');return {text:synthetic(878+c.attempt,1000),chapterComplete:true};}const r=await craftFixture(...args);if(lowReview&&args[4]==='review'){r.scores.commercial.score=10;r.issues.push({severity:'major',message:'SYNTHETIC missing action cost',quote:r.scores.commercial.quote,fix:'SYNTHETIC add a choice and lasting cost'});}return r;}});
   const secrets=JSON.parse(await readFile(join(directory,'server-secrets.json'),'utf8'));
   const headers={Authorization:'Bearer '+secrets.controlToken,'X-Novel-Server-Id':service.serverId,'Content-Type':'application/json'};
   if(seed)await settings(service.store,{apiKey:'SYNTHETIC_SAVED_KEY_NOT_REAL',spendEnabled:true},secrets.encryptionKey);
@@ -68,7 +68,7 @@ async function scenario(name,fn,{seed=false,withBook=false,width=390,height=844,
   }
   async function save(page){await page.getByRole('button',{name:'保存模型配置',exact:true}).click();await page.locator('.model-save-bar').getByText(/已保存。/).waitFor();}
   async function back(page){await page.getByRole('button',{name:'返回创作控制台',exact:true}).click();}
-  try{await fn({service,secrets,book,context,faults,actions,counts,open,save,back,simulated:()=>simulatedCalls});assert.deepEqual(errors,[]);passed++;console.log('PASS '+passed+': '+name);}
+  try{await fn({service,secrets,book,context,faults,actions,counts,open,save,back,simulated:()=>simulatedCalls,roles:()=>simulatedRoles});assert.deepEqual(errors,[]);passed++;console.log('PASS '+passed+': '+name);}
   finally{faults.release?.();await context.close();await service.stop();await rm(directory,{recursive:true,force:true});}
 }
 try{
@@ -152,7 +152,7 @@ try{
   const currentBook=await x.service.store.get(x.book.id);
   const review=await craftFixture(x.service.store,await config(x.service.store),currentBook,'SYNTHETIC review','review');
   review.scores.commercial.score=5;review.issues=[{severity:'minor',message:'SYNTHETIC visible minor feedback',quote:chapter.content.slice(0,12),fix:'SYNTHETIC visible suggested edit'}];
-  chapter=await x.service.store.save(chapter,{...chapter,status:'blocked',attempt:2,review,gate:{pass:false,score:76,issues:[{code:'SCORE',message:'SYNTHETIC below 85'}]}});
+  chapter=await x.service.store.save(chapter,{...chapter,status:'blocked',attempt:3,reviewCount:1,reviewAttempts:1,reviewReceipts:[{sourceHash:chapter.hash,legacy:true}],review,gate:{pass:false,score:76,issues:[{code:'SCORE',message:'SYNTHETIC below 85'}]}});
   const originalHash=chapter.hash;
   const page=await x.open({view:'dashboard'});await page.getByRole('button',{name:'查看审核与修改',exact:true}).click();
   const panel=page.getByRole('region',{name:'审核与修改',exact:true});await panel.waitFor();
@@ -167,13 +167,23 @@ try{
   await page.getByRole('button',{name:'云端正在运行',exact:true}).waitFor();
   assert.equal(x.counts('startEditorRevision'),1);assert.equal((await x.service.store.get(chapter.id)).hash,originalHash);
   assert.equal((await x.service.store.get(x.book.id+':job')).targetChapters,3);await page.close();
-  await x.service.tick();await x.service.tick();let revised=await x.service.store.get(chapter.id);assert.equal(revised.status,'reviewing');assert.equal(revised.attempt,3);assert.notEqual(revised.hash,originalHash);
+  await x.service.tick();await x.service.tick();let revised=await x.service.store.get(chapter.id);assert.equal(revised.status,'reviewing');assert.equal(revised.attempt,4);assert.notEqual(revised.hash,originalHash);
   for(let i=0;i<100&&(await x.service.store.get(x.book.id+':job')).status!=='completed';i++)await x.service.tick();
   assert.equal((await x.service.store.get(x.book.id+':job')).status,'completed');assert.equal((await x.service.store.list('chapter',x.book.id)).filter(c=>c.status==='locked').length,3);
   assert.equal((await x.service.store.list('editorRevision',x.book.id))[0].status,'completed');assert.ok((await x.service.store.list('version',x.book.id)).some(v=>v.hash===originalHash));
   const reopened=await x.open({view:'dashboard'});await reopened.getByRole('heading',{name:'全书已完成',exact:true}).waitFor();assert.ok(await reopened.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
  },{seed:true,withBook:true,rewrite:true});
 
+
+ await scenario('fifth low audit visibly releases as needs polish, preserves score and calls exactly once per stage',async x=>{
+  await startJob(x.service.store,x.book.id,1);
+  await until(async()=>{await x.service.tick();return (await x.service.store.get(x.book.id+':job')).status==='completed';});
+  const c=(await x.service.store.list('chapter',x.book.id))[0];assert.equal(c.reviewCount,5);assert.equal(c.needsPolish,true);assert.equal(c.gate.pass,false);assert.equal(c.gate.score,81);
+  assert.equal(x.roles().filter(r=>r==='write').length,1);assert.equal(x.roles().filter(r=>r==='review').length,5);assert.equal(x.roles().filter(r=>r==='rewrite').length,4);assert.equal(x.roles().filter(r=>['revision_plan','opening_review','arc_review'].includes(r)).length,0);
+  const page=await x.open({view:'dashboard'});await page.locator('.chapter-row').first().getByText(/五审放行·待人工精修/).waitFor();
+  await page.locator('.chapter-row').first().click();const panel=page.getByRole('region',{name:'审核与修改'});await panel.getByText(/已按五审上限放行，待人工精修/).waitFor();await panel.getByText(/实际审核 81\/100/).waitFor();
+  assert.equal(await panel.getByRole('button',{name:'按审稿意见修订',exact:true}).count(),0);assert.equal(x.counts('startEditorRevision'),0);
+ },{seed:true,withBook:true,rewrite:true,lowReview:true});
  await scenario('maintenance lock is visible, disables creation and key entry, and never calls the supplier',async x=>{
   const previous=process.env.NOVEL_MODEL_API_DISABLED;process.env.NOVEL_MODEL_API_DISABLED='1';
   try{

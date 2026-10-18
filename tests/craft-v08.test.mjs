@@ -15,7 +15,7 @@ import {startJob,runJobStep} from '../lib/jobs.mjs';
 import {restoreBackup} from '../lib/backup.mjs';
 import {forkRevision} from '../lib/revisions.mjs';
 import {writePrompt,planningPrompt,contractPrompt} from '../lib/prompts.mjs';
-const newBook=(s,words=1000,total=3)=>createBook(s,{totalChapters:total,targetWords:words,craftProtocol:0},crypto.randomUUID());
+const newBook=async(s,words=1000,total=3)=>{const b=await createBook(s,{totalChapters:total,targetWords:words,craftProtocol:0},crypto.randomUUID());return s.save(b,{...b,singleCallProtocol:0});};
 async function until(s,b,predicate,invoke=craftFixture,max=90){for(let i=0;i<max;i++){const r=await step(s,b.id,'',invoke);if(await predicate(r))return r;}throw Error('SYNTHETIC fixture did not reach state');}
 async function readyReview(s,b){await until(s,b,r=>r.chapter?.status==='reviewing');return (await s.list('chapter',b.id)).find(c=>c.status==='reviewing');}
 const changeReview=(patch)=>async(...a)=>{const r=await craftFixture(...a);if(a[4]==='review')patch(r);return r;};

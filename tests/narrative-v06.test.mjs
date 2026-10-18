@@ -21,7 +21,7 @@ async function advancedFixture(store,cfg,b,prompt,role,...rest){
  return fixture(store,cfg,b,prompt,role,...rest);
 }
 // Keep explicit coverage for books created before the V0.8 craft protocol.
-async function newBook(s,total=3){const b=await createBook(s,{totalChapters:total,targetWords:1000},crypto.randomUUID());return s.save(b,{...b,craftProtocol:0});}
+async function newBook(s,total=3){const b=await createBook(s,{totalChapters:total,targetWords:1000},crypto.randomUUID());return s.save(b,{...b,singleCallProtocol:0,craftProtocol:0});}
 async function until(s,b,predicate,invoke=advancedFixture,max=70){for(let i=0;i<max;i++){const result=await step(s,b.id,'',invoke);if(await predicate(result))return result;}throw Error('SYNTHETIC fixture did not reach state');}
 async function reviewedFirst(s,b){await until(s,b,r=>r.chapter?.status==='locked');return s.get(b.id);}
 
