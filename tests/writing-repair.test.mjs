@@ -2,8 +2,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fresh,book,fixture,synthetic} from './workflow-support.mjs';
-import {step} from '../lib/engine.mjs';
-import {hash} from '../lib/store.mjs';
+import {step,acceptRepairCandidate,config} from '../lib/engine.mjs';
+import {hash,Store} from '../lib/store.mjs';
 import {count} from '../lib/quality.mjs';
 import {fragmentWordBudget} from '../lib/writing-budget.mjs';
 import {applyRepair} from '../lib/repairs.mjs';
@@ -76,4 +76,64 @@ test('尾段目标缩短后使用同一篇幅预算验完整性，保存已有�
     assert.ok(result.chapter.content.startsWith(content));assert.equal(count(result.chapter.content),8700);
     assert.equal(result.chapter.hash,await hash(result.chapter.content));
   }finally{s.db.conn.close();}
+});
+
+test('逐字唯一的短锚点、较长锚点与snake_case兼容，冲突字段和空定位仍拒绝',async()=>{
+  const s=fresh();try{
+    const content=synthetic(610,2000),c=await s.create('chapter',{content,hash:await hash(content)},'SYNTHETIC book');
+    for(const size of [7,120]){
+      const patch={start_quote:content.slice(300,300+size),end_quote:content.slice(600-size,600),after:''};
+      const result=await applyRepair(c,{baseHash:c.hash,patches:[patch]});assert.equal(result.content,content.slice(0,300)+content.slice(600));
+      await assert.rejects(applyRepair(c,{baseHash:c.hash,patches:[{...patch,startQuote:'SYNTHETIC conflicting quote'}]}),/冲突/);
+    }
+    await assert.rejects(applyRepair(c,{baseHash:c.hash,patches:[{startQuote:'',endQuote:content.slice(500,510),after:''}]}),/定位/);
+  }finally{s.db.conn.close();}
+});
+
+async function repairCandidateFixture(s){
+  const b=await book(s,1000,3);await step(s,b.id,'',fixture);await step(s,b.id,'',fixture);
+  let c=(await s.list('chapter',b.id))[0];const cut=synthetic(701,350),content=synthetic(702,650)+'\n\n'+cut+'\n\n'+synthetic(703,350);
+  const digest=await hash(content),response={baseHash:digest,patches:[{start_quote:cut.slice(0,7),end_quote:cut.slice(-7),after:''}]};
+  const modelCandidate={parsed:true,role:'repair',response,bookId:b.id,chapterNumber:1,planRevision:b.planRevision||0,styleRevision:b.styleRevision||0,platformHash:b.platformBinding?.hash||null,configRevision:(await config(s)).revision||0,createdAt:new Date().toISOString()};
+  c=await s.save(c,{...c,content,chunks:[content],hash:digest,status:'rework',attempt:3,modelCandidate});return {b,c,content};
+}
+
+test('语义校验失败也保存完整模型响应与上下文，不覆盖正文，不保存提示词或密钥',async()=>{
+  const s=fresh();try{
+    const {b,c,content}=await repairCandidateFixture(s);await s.save(c,{...c,attempt:1,modelCandidate:null});
+    const response={baseHash:'SYNTHETIC stale hash',patches:[{startQuote:'SYNTHETIC anchor',endQuote:'SYNTHETIC end',after:''}]};
+    await assert.rejects(step(s,b.id,'SYNTHETIC PRIVATE SECRET',async()=>response),/哈希/);
+    const saved=await s.get(c.id);assert.equal(saved.content,content);assert.equal(saved.attempt,2);assert.equal(saved.lease,null);
+    assert.deepEqual(saved.modelCandidate.response,response);assert.equal(saved.modelCandidate.parsed,true);assert.equal(saved.modelCandidate.role,'repair');
+    assert.equal(saved.modelCandidate.bookId,b.id);assert.equal(saved.modelCandidate.chapterNumber,1);
+    assert.doesNotMatch(JSON.stringify(saved.modelCandidate),/SYNTHETIC PRIVATE SECRET|实际全文|reasoning_content/);
+  }finally{s.db.conn.close();}
+});
+
+test('第三轮已付费响应可免费重验合并，保留旧版本、费用及轮次，后续仍须完整审核',async()=>{
+  const s=fresh();try{
+    const {b,c,content}=await repairCandidateFixture(s),before=await s.cost(b.id);
+    const saved=await acceptRepairCandidate(s,c.id);assert.equal(saved.status,'reviewing');assert.equal(count(saved.content),1000);
+    assert.equal(saved.attempt,3);assert.equal(saved.modelCandidate,null);assert.equal(saved.lastRepair.reused,true);assert.equal(saved.lease,null);
+    assert.deepEqual(await s.cost(b.id),before);assert.ok((await s.list('version',b.id)).some(v=>v.content===content&&v.hash===c.hash));
+    await assert.rejects(acceptRepairCandidate(s,c.id),/没有等待合并/);
+    const reviewed=await step(s,b.id,'',fixture);assert.equal(reviewed.chapter.status,'locked');
+  }finally{s.db.conn.close();}
+});
+
+test('免费复用拒绝截断、旧上下文、旧哈希、歧义定位、执行中或其他所有者，旧稿与费用保留',async()=>{
+  for(const change of ['truncated','context','hash','ambiguous','running','owner']){
+    const s=fresh();try{
+      const {b,c,content}=await repairCandidateFixture(s),candidate=structuredClone(c.modelCandidate),before=await s.cost(b.id);
+      if(change==='truncated'){delete candidate.parsed;delete candidate.response;candidate.content='SYNTHETIC incomplete JSON';}
+      if(change==='context')candidate.configRevision++;
+      if(change==='hash')candidate.response.baseHash='SYNTHETIC stale hash';
+      if(change==='ambiguous')candidate.response.patches[0]={startQuote:'。\n',endQuote:'。\n',after:''};
+      await s.save(c,{...c,modelCandidate:candidate});
+      if(change==='running')await s.create('job',{status:'running'},b.id,b.id+':job');
+      const owner=change==='owner'?new Store(s.db,'SYNTHETIC OTHER OWNER'):s;
+      await assert.rejects(acceptRepairCandidate(owner,c.id),/完整返修|上下文|哈希|定位|暂停|不存在/);
+      const saved=await s.get(c.id);assert.equal(saved.content,content);assert.equal(saved.attempt,3);assert.equal(saved.lease,null);assert.deepEqual(await s.cost(b.id),before);
+    }finally{s.db.conn.close();}
+  }
 });

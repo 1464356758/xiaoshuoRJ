@@ -7,6 +7,8 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {buildServer} from '../cloud-server/build-server.mjs';
 import {settings,createBook,step,config} from '../lib/engine.mjs';
+import {hash} from '../lib/store.mjs';
+import {synthetic} from './workflow-support.mjs';
 import {startJob} from '../lib/jobs.mjs';
 import {craftFixture} from './craft-support.mjs';
 import {installCloudClient} from '../android-cloud/runtime/cloud-client.mjs';
@@ -17,6 +19,18 @@ async function authorization(directory,service){const x=JSON.parse(await readFil
 async function configured(service,directory){const x=JSON.parse(await readFile(join(directory,'server-secrets.json'),'utf8'));await settings(service.store,{apiKey:'SYNTHETIC_SUPPLIER_KEY_FOR_CLOUD_TESTS',inputPrice:1,outputPrice:1,monthLimit:100,bookLimit:100,taskLimit:2,spendEnabled:true},x.encryptionKey);return x.encryptionKey;}
 async function book(service,total=3){return createBook(service.store,{title:'SYNTHETIC ONLY / cloud protocol',totalChapters:total,targetWords:1000,budget:20},crypto.randomUUID());}
 async function until(check){const limit=Date.now()+6000;while(Date.now()<limit){if(await check())return;await new Promise(r=>setTimeout(r,10));}throw new Error('SYNTHETIC cloud test deadline');}
+
+test('私有云API可免费复用完整修订响应，仍要求控制凭证并保留费用和三轮上限',async()=>{
+  let calls=0;const x=await setup({invoke:async()=>{calls++;throw new Error('SYNTHETIC no supplier calls expected');}});
+  try{
+    const b=await book(x.service),content=synthetic(912,1400),digest=await hash(content),cfg=await config(x.service.store);
+    const c=await x.service.store.create('chapter',{number:1,title:'SYNTHETIC candidate',content,chunks:[content],hash:digest,status:'rework',attempt:3,modelCandidate:{parsed:true,role:'repair',bookId:b.id,chapterNumber:1,planRevision:b.planRevision||0,styleRevision:0,platformHash:null,configRevision:cfg.revision||0,response:{baseHash:digest,patches:[{startQuote:content.slice(300,310),endQuote:content.slice(690,700),after:''}]}}},b.id,b.id+':chapter:1');
+    const body=JSON.stringify({action:'acceptRepairCandidate',id:c.id}),headers=await authorization(x.directory,x.service);
+    assert.equal((await x.service.dispatch(new Request('https://cloud.example/api/workspace',{method:'POST',body}))).status,401);
+    const before=await x.service.store.cost(b.id),r=await x.service.dispatch(new Request('https://cloud.example/api/workspace',{method:'POST',headers,body}));
+    assert.equal(r.status,200);const {result}=await r.json();assert.equal(result.status,'reviewing');assert.equal(result.attempt,3);assert.equal(result.lastRepair.reused,true);assert.equal(calls,0);assert.deepEqual(await x.service.store.cost(b.id),before);
+  }finally{await x.cleanup();}
+});
 
 test('长模型调用等待期间独立心跳持续更新，手机读取不会将执行器误判离线',async()=>{
   let release,entered=false,calls=0;const gate=new Promise(r=>release=r);
