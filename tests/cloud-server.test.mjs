@@ -9,7 +9,7 @@ import {buildServer} from '../cloud-server/build-server.mjs';
 import {settings,createBook,step,config} from '../lib/engine.mjs';
 import {hash} from '../lib/store.mjs';
 import {synthetic} from './workflow-support.mjs';
-import {startJob} from '../lib/jobs.mjs';
+import {startJob,pauseJob} from '../lib/jobs.mjs';
 import {craftFixture} from './craft-support.mjs';
 import {installCloudClient} from '../android-cloud/runtime/cloud-client.mjs';
 await buildServer();
@@ -19,6 +19,23 @@ async function authorization(directory,service){const x=JSON.parse(await readFil
 async function configured(service,directory){const x=JSON.parse(await readFile(join(directory,'server-secrets.json'),'utf8'));await settings(service.store,{apiKey:'SYNTHETIC_SUPPLIER_KEY_FOR_CLOUD_TESTS',inputPrice:1,outputPrice:1,monthLimit:100,bookLimit:100,taskLimit:2,spendEnabled:true},x.encryptionKey);return x.encryptionKey;}
 async function book(service,total=3){return createBook(service.store,{title:'SYNTHETIC ONLY / cloud protocol',totalChapters:total,targetWords:1000,budget:20},crypto.randomUUID());}
 async function until(check){const limit=Date.now()+6000;while(Date.now()<limit){if(await check())return;await new Promise(r=>setTimeout(r,10));}throw new Error('SYNTHETIC cloud test deadline');}
+
+test('1600次停止状态读取与轮询均不调用供应商，完整账目查询包含所有作品和连接测试',async()=>{
+  let network=0;const x=await setup({invoke:async()=>{network++;throw new Error('SYNTHETIC must not invoke supplier');}});
+  try{await configured(x.service,x.directory);const b=await book(x.service);await startJob(x.service.store,b.id,3);await pauseJob(x.service.store,b.id);const headers=await authorization(x.directory,x.service);
+    for(let i=0;i<1600;i++){const path=i%3===0?'/api/status':i%3===1?'/api/workspace':'/api/workspace?callAudit=1';const r=await x.service.dispatch(new Request('https://cloud.example'+path,{headers}));assert.equal(r.status,200);await r.json();}
+    await x.service.tick();assert.equal(network,0);assert.equal((await x.service.store.cost(b.id)).calls.length,0);
+    const r=await x.service.dispatch(new Request('https://cloud.example/api/workspace?callAudit=1',{headers}));const a=await r.json();assert.equal(a.scope,'all-owner-calls');assert.equal(a.totalCalls,0);
+  }finally{await x.cleanup();}
+});
+
+test('维护停用在真实API入口阻断连接测试和创作，即使旧App费用勾选仍开启',async()=>{
+  const x=await setup();const previous=process.env.NOVEL_MODEL_API_DISABLED;
+  try{await configured(x.service,x.directory);const b=await book(x.service),headers=await authorization(x.directory,x.service);process.env.NOVEL_MODEL_API_DISABLED='1';
+    for(const action of [{action:'testConnection',role:'planner'},{action:'step',id:b.id},{action:'githubAssist',id:b.id,question:'SYNTHETIC repository question'}]){const r=await x.service.dispatch(new Request('https://cloud.example/api/workspace',{method:'POST',headers,body:JSON.stringify(action)}));assert.equal(r.status,400);assert.match((await r.json()).error,/维护停用/);}
+    assert.equal((await x.service.store.cost(b.id)).calls.length,0);const status=await (await x.service.dispatch(new Request('https://cloud.example/api/status',{headers}))).json();assert.equal(status.modelApiDisabled,true);
+  }finally{if(previous===undefined)delete process.env.NOVEL_MODEL_API_DISABLED;else process.env.NOVEL_MODEL_API_DISABLED=previous;await x.cleanup();}
+});
 
 test('私有云API可免费复用完整修订响应，仍要求控制凭证并保留费用和三轮上限',async()=>{
   let calls=0;const x=await setup({invoke:async()=>{calls++;throw new Error('SYNTHETIC no supplier calls expected');}});

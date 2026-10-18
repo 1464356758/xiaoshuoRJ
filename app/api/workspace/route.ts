@@ -7,6 +7,7 @@ import {Store} from '@/lib/store.mjs';
 import {snapshot,adoptPlatformRules,createBook,settings,step,saveChapter,unlockChapter,reviseChapter,exportBook,savePlan,testConnection,setBookBudget,openingAudit,acceptRepairCandidate,acceptReviewCandidate} from '@/lib/engine.mjs';
 import {startJob,startEditorRevision,pauseJob,runJobStep,runnerStatus} from '@/lib/jobs.mjs';
 import {hash} from '@/lib/store.mjs';
+import {callAudit} from '@/lib/call-audit.mjs';
 import {restoreBackup} from '@/lib/backup.mjs';
 import {submissionPacket,officialRuleSource,policyVerified} from '@/lib/acceptance.mjs';
 import {styleWorkbench,saveStyleReference,archiveStyleReference,createStyleTask,stepStyleTask,pauseStyleTask,activateStyle} from '@/lib/style-workbench.mjs';
@@ -22,6 +23,7 @@ const reply=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cach
 export async function GET(request:Request) {
   try {
     const {store,runnerEnabled}=resources(request),q=new URL(request.url).searchParams;
+    if(q.get('callAudit')==='1')return reply(await callAudit(store));
     if(q.get('style'))return reply(await styleWorkbench(store,q.get('style')));
     if(q.get('submissionPacket')) {const id=q.get('submissionPacket'),state=await snapshot(store,id),b=await store.get(id);if(!b||b.kind!=='book')throw new Error('作品不存在');const p=state.platforms.find((p:any)=>p.name===b.platform);return new Response(await submissionPacket(b,await store.list('chapter',id),await store.get(id+':opening'),p),{headers:{'Content-Type':'text/plain;charset=utf-8','Content-Disposition':'attachment; filename="submission.txt"','Cache-Control':'no-store'}});}
     if(q.get('planVersions'))return reply({versions:await store.list('planVersion',q.get('planVersions'))});

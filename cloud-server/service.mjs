@@ -1,6 +1,7 @@
 import {createServer} from 'node:http';
 import {Store,tickRunner,jobActive,refreshRunnerHeartbeat,createWorkspaceApi,guardedModelCall} from './generated/workspace-api.mjs';
 import {openDatabase,privateState,configureControlToken,authorize,DaemonLease} from './storage.mjs';
+import {modelOutboundDisabled,assertModelOutbound} from '../lib/model-safety.mjs';
 
 export async function recoverCloud(store){
   const uncertain=new Set((await store.db.prepare("SELECT DISTINCT book FROM calls WHERE owner=? AND status='reserved'").bind(store.owner).all()).results.map(x=>x.book));
@@ -32,7 +33,7 @@ export async function createCloudService({directory,publicOrigin=null,invoke,int
   async function tick(){
     if(closing||!ready||!lease.held()||busy)return null;
     busy=(async()=>{try{
-      const guard=async(...args)=>{if(closing||!lease.held())throw new Error('云端执行器已停止，本次未调用模型');return (invoke||guardedModelCall)(...args);};
+      const guard=async(...args)=>{if(closing||!lease.held())throw new Error('云端执行器已停止，本次未调用模型');assertModelOutbound();return (invoke||guardedModelCall)(...args);};
       const result=await tickRunner(db,secret.encryptionKey,guard);lastTick=result.lastTick;return result;
     }finally{busy=null;}})();return busy;
   }
@@ -45,7 +46,7 @@ export async function createCloudService({directory,publicOrigin=null,invoke,int
     if(!authorize(request.headers.get('Authorization'),secret.controlToken))return json({error:'云端连接凭证无效'},401);
     if(!ready||closing||!lease.held())return json({error:'云端执行器尚未就绪'},503);
     if(request.headers.has('Origin')&&(!publicOrigin||request.headers.get('Origin')!==publicOrigin))return json({error:'请求来源不匹配'},403);
-    if(url.pathname==='/api/status'&&request.method==='GET')return json({product:'novel-factory-cloud',protocol:1,serverId:secret.serverId,version:'0.12.8',workerReady:true,lastTick,execution:'independent-server',requiresPhone:false});
+    if(url.pathname==='/api/status'&&request.method==='GET')return json({product:'novel-factory-cloud',protocol:1,serverId:secret.serverId,version:'0.12.9',workerReady:true,lastTick,execution:'independent-server',requiresPhone:false,modelApiDisabled:modelOutboundDisabled()});
     if(url.pathname!=='/api/workspace'||!['GET','POST'].includes(request.method))return json({error:'接口不存在'},404);
     if(request.headers.get('X-Novel-Server-Id')!==secret.serverId)return json({error:'服务器身份已变化，请重新核对连接；本次未执行操作'},409);
     const headers=new Headers({'Content-Type':'application/json'});
