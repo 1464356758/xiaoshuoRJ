@@ -60,6 +60,17 @@ test('原生同步失败会清理计时器，配对和保存请求都能结束',
   await assert.rejects(fetch('/api/workspace',{method:'POST',body:'{}'}),/bridge failure/);await assert.rejects(client.connect('https://cloud.example','SYNTHETIC'),/pairing failure/);
   await new Promise(resolve=>setTimeout(resolve,25));assert.equal(cancelled,0);
 }finally{globalThis.fetch=original;globalThis.location=location;}});
+test('保存和读取使用短控制超时，模型步骤仍保留较长等待窗口',async()=>{const original=globalThis.fetch,location=globalThis.location;globalThis.location=new URL('https://appassets.androidplatform.net/assets/index.html');let id,cancelled=0;try{
+  installCloudClient({request(value){id=value;},cancelRequest(){cancelled++;}},{timeoutMs:100,controlTimeoutMs:10});
+  await assert.rejects(fetch('/api/workspace',{method:'POST',body:'{"action":"settings"}'}),/等待超时/);
+  const long=fetch('/api/workspace',{method:'POST',body:'{"action":"step"}'});
+  await new Promise(resolve=>setTimeout(resolve,25));globalThis.__novelCloudResult(id,JSON.stringify({status:200,body:'{"synthetic":true}'}));
+  assert.deepEqual(await (await long).json(),{synthetic:true});assert.equal(cancelled,1);
+}finally{globalThis.fetch=original;globalThis.location=location;}});
+test('取消桥接本身抛错时，请求仍能超时结束，不会卡住保存状态',async()=>{const original=globalThis.fetch,location=globalThis.location;globalThis.location=new URL('https://appassets.androidplatform.net/assets/index.html');try{
+  installCloudClient({request(){},cancelRequest(){throw new Error('SYNTHETIC native cancellation failure');}},{timeoutMs:10});
+  await assert.rejects(fetch('/api/workspace',{method:'POST',body:'{"action":"settings"}'}),/等待超时/);
+}finally{globalThis.fetch=original;globalThis.location=location;}});
 
 test('部署连接凭证更换保留服务器身份、加密主密钥和已保存作品',async()=>{const directory=await mkdtemp(join(tmpdir(),'novel-cloud-pairing-'));let service=await createCloudService({directory,autoStart:false});try{
   const file=join(directory,'server-secrets.json'),before=JSON.parse(await readFile(file,'utf8')),b=await book(service);
