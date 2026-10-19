@@ -1,10 +1,13 @@
-# 接续V2
+# 下一步：批准已准备的V2部署，再核验
 
-读取AGENTS、README、PROJECT_STATUS、ARCHITECTURE、TEST_REPORT、DEPLOYMENT和分支最近提交。用户要求全文已在本次上传执行，核心要求见v2/README；不中途要求用户反复“继续”。
+读取AGENTS、README、PROJECT_STATUS、ARCHITECTURE、TEST_REPORT、DEPLOYMENT及最近提交。完整用户要求在v2/docs/REQUIREMENTS.zh-CN.txt。不要重做已完成源码、清空旧稿或自动续跑十章。
 
-1. 完成持久发送意图前后、HTTP前后、响应保存前后的崩溃与恢复测试；修复真实问题，不增加模型重试。
-2. 实现v2/android原生Java界面与SDK命令行构建。原SDK和签名均已恢复到仓库外私有目录，不上传公开仓库。保留原包名和CloudVault连接身份，版本码大于18。
-3. 用实际最终APK核验manifest、签名、资源和源码hash。无安卓设备时明确实机未验收。
-4. 部署前重读实时数据，不以本页快照覆盖新稿。原服务无在途后，备份SQLite与server-secrets，在私有/data备份位置校验；迁移至/data/v2/novel.sqlite。默认暂停，不启动旧十章。
-5. V2使用独立Docker入口；更新原服务，等待SUCCESS并回读受保护接口、原稿hash、审核次数、历史稿和调用记录。无真实供应商调试。
-6. 将最终APK、手机一页教程、公开源码包和真实测试报告持久交付。同步main前读取最新head、使用CAS，禁止强推。
+1. 当前唯一生产阻塞是Railway accept-deploy审批被取消。所有准备已完成，源码固定58719c77d5cc4283148c6116a459a2abfa9d88dd；7项STAGED变更/patch e0d1721a-6549-4a52-83f1-73c9707db5b4保留。用户确认后重读暂存差异，再提交；不要绕过先前审批拒绝，也不要无授权反复重试。
+2. 项目2b3536c7-bc05-4787-9a1a-63f5396a8bfa / environment de2133f0-5546-493a-8b35-e3373bed5dce / service 8dfb074f-1290-467a-9f18-0464946c073c。保持原域名/data卷，不新建收费资源。
+3. 部署前重读实时数据与在途。最后已读首章8984汉字/hash5540a0d8…、79分、5审，6历史版本、30调用，第二章无正文，原job blocked/目标10，无reserved。私有逻辑备份/真实离线迁移均完成，但不能把快照覆盖后续新稿。
+4. 等待部署终态SUCCESS。若失败，读本次部署日志，修复实际原因。新入口在/data/private-backups/before-v2生成一致性SQLite+server-secrets并integrity_check，旧执行器租约须释放且无reserved；新库/data/v2/novel.sqlite，任务默认暂停。原库保留。
+5. 实际HTTPS回读/healthz、受保护/api/status（version2.0.0/protocol2/原serverId/build）、/v2/state、正文hash/5审/版本/调用/密钥已存状态。迁移不能发真实模型或恢复旧十章。
+6. 成功后更新文档与教程“待部署”状态，按同一文件身份替换已交付的教程/报告/交付ZIP，不重复制造多份最终文件。APK若代码未改无需重构；修改则重新编译验签，保持高版本码。
+7. 手机实机与真实一章验收由本人在App明确启动。不要把合成测试或HTTP200当文学质量/签约保证。
+
+安卓SDK、签名和连接曾在前一会话的私有路径恢复。不要把私有签名、连接凭证或用户稿件提交公开GitHub。真实APK校验见v2/docs/APK_VERIFICATION.json；旧源码和文档归档保留。
