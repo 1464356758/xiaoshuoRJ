@@ -8,7 +8,9 @@
 
 280项程序、真实SQLite/HTTP/故障及隔离生产包启动测试、TypeScript通过；实际APK23项手机界面场景通过（模拟供应商，0真实DeepSeek请求），版本码16、同包名同证书。实机与真实文学质量未验证。
 
-现网0.13.0已确认SUCCESS（37e26e7a-b9ca-43c0-8093-b39670e53dd4，源码9f2d4a7）；0.14.0准备部署。保持原服务/UUID/卷，NOVEL_MODEL_API_DISABLED=1，spendEnabled=false、配置revision4，不恢复费用或旧任务。部署前首章8687字/78分/attempt3，0正式定稿、目标10，累计23条调用/最高价记账5.708349元，过去一小时0条；与1600次/约50元仍待官方对账。
+现网0.14.0已部署SUCCESS：386b369b-ccda-46c3-9c54-f5b7a5c707d8，源码05f45afcd7ecb8082d5bb324d4d393373787773b，UTC2026-10-18T23:57:28.147Z。实际HTTPS版本、原UUID和维护锁已核对，启动/连接测试入口均400维护拦截，部署前后正文hash、账目及原目标一致。保持原服务/UUID/卷，NOVEL_MODEL_API_DISABLED=1，spendEnabled=false、配置revision4，不恢复费用或旧任务。部署前首章8687字/78分/attempt3，0正式定稿、目标10，累计23条调用/最高价记账5.708349元，过去一小时0条；与1600次/约50元仍待官方对账。
+
+最终安装包NovelFactory-0.15.0-Single-Call.apk，217747字节，SHA256 a758a26a9d91dcf648b444ae6cf060e1b1fb5435aa9d3141afb1fc956fa4f596。实际manifest版本码16/版本0.15.0，同原包证书；最终包23项界面场景通过，已保存交付。没有真实DeepSeek调用或旧任务恢复。
 
 详见[单次请求与五审说明](docs/SINGLE_CALL_AND_FIVE_REVIEWS_V015.md)。下面0.13.0及更早记录为历史，三轮/两轮无改善/自动联合审核规则已由新要求取代。
 

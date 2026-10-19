@@ -2,10 +2,10 @@
 
 ## 本轮优先事项（旧三轮规则已被用户五审指令替代）
 
-1. 本轮单次正文/审核/返修及五审放行代码已完成，280项测试、TypeScript和APK23项界面场景通过。部署0.14.0到原Railway服务并观察终态SUCCESS，实际HTTPS验证版本、原UUID、modelApiDisabled=true。
-2. 与private-single-call-check/before-deploy.json做只读比较：原稿hash/8687字/78分/attempt3、原10章目标、配置revision4/spendEnabled=false及23条调用均不变。不要启动真实模型任务来验证。
-3. 保存同签名0.15.0 APK并交付；更新部署回执和校验值。未观察部署SUCCESS前不得称已上线；手机实机和真实文学质量未验收。
-4. 用户已删除旧Key，保持NOVEL_MODEL_API_DISABLED=1；没有新的明确恢复指令时不启用费用、不换模型、不抬预算、不启动旧任务。官方1600次/约50元与本服务23条/5.708349元差额未完成对账。
+1. 本轮已完成并上线：后端0.14.0，源码05f45afcd7ecb8082d5bb324d4d393373787773b，部署386b369b-ccda-46c3-9c54-f5b7a5c707d8终态SUCCESS。280项程序、TypeScript和最终APK23项界面场景通过。
+2. 实际HTTPS与原UUID/维护锁确认；原稿hash、8687字/78分/attempt3、原10章目标、配置revision4/spendEnabled=false和23条调用均与部署前一致。模拟流程之外0真实模型请求。
+3. 新版同签名0.15.0 APK已保存并准备交付，hash见PROJECT_STATUS。用户没有新Key，仍保持NOVEL_MODEL_API_DISABLED=1；不能擅自开启费用、增加预算或恢复旧任务。后续本人要求恢复时，先明确现有单章已耗费用、剩余额度和新Key保存，不因新规则绕过预算。
+4. 官方1600次/约50元与本服务23条/5.708349元差额仍未完成对账；需要官方按时间/密钥/模型/请求ID核对。不要把程序验证说成真实文学质量通过或手机实机验证。
 
 ## 以下为历史行动记录（与上述新要求冲突时以上述为准）
 

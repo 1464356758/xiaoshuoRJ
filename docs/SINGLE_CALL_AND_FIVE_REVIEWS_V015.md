@@ -38,3 +38,11 @@ reviewAttempts同时限制当前协议最多5次实际审核尝试。每个写�
 验证：280项真实SQLite/HTTP/故障与隔离生产包启动测试通过，TypeScript通过；实际APK资源23项手机尺寸界面场景通过，含退出页面后完成、三轮旧稿恢复和五审低分可见标记。签名v1/v2/v3、zipalign和同包名同证书覆盖安装检查通过；版本码16。手机实机和真实DeepSeek文学质量未验证。
 
 源码、云端终态部署及最终APK校验值见PROJECT_STATUS.md；未观察终态SUCCESS前不得写已上线。
+
+## 实际部署与最终交付
+
+0.14.0已部署终态SUCCESS：386b369b-ccda-46c3-9c54-f5b7a5c707d8，源码05f45afcd7ecb8082d5bb324d4d393373787773b，UTC2026-10-18T23:57:28.147Z。生产一副本在线，无待应用变更；保留原服务、卷和UUID。历史0bb4e431失败记录仍存在，不是本次部署失败。
+
+直接HTTPS回读0.14.0、modelApiDisabled=true，费用仍false/revision4。testConnection与startJob均在维护入口被拒绝，未发模型请求。更新前后原稿hash、8687字/78分/attempt3、原10章目标及全owner23条/5.708349元完全一致，最近一小时0条。
+
+最终APK：NovelFactory-0.15.0-Single-Call.apk，217747字节，SHA256 a758a26a9d91dcf648b444ae6cf060e1b1fb5435aa9d3141afb1fc956fa4f596。manifest版本码16，包名cn.novelfactory.personal；签名v1/v2/v3及zipalign通过，与旧证书相同。该最终APK自身提取资源通过23项手机界面场景。安装包已保存；没有恢复付费调用、投稿或公开发布小说。
