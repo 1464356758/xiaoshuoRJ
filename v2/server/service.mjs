@@ -22,13 +22,14 @@ export function createService(engine,{serverId,controlToken,publicOrigin=null,bu
  if(u.pathname==='/v2/action'&&req.method==='POST'){const x=await req.json();let result;
   if(x.action==='settings')result=engine.settings(x.input);
   else if(x.action==='create')result=engine.createBook(x.input);
-  else if(x.action==='start')result=engine.start(x.bookId,x.input);
+  else if(x.action==='start'){const {config,...j}=engine.start(x.bookId,x.input);result={...j,configRevision:config?.revision};}
   else if(x.action==='stop')result=engine.stop(x.bookId);
   else if(x.action==='stopAll'){for(const j of s.all('SELECT book_id FROM jobs'))engine.stop(j.book_id);result={ok:true};}
   else if(x.action==='test')result=engine.testConnection(x.input);
   else if(x.action==='edit')result=engine.edit(x.chapterId,x.input);
-  else if(x.action==='reparse')result=engine.reparse(x.key);
+  else if(x.action==='reparse')result=safeStep(engine.reparse(x.key));
   else if(x.action==='restore'){ensure(!engine.busy,'请先停止运行任务');result=restoreBackup(s,x.input);}
+  else if(x.action==='reference'){const b=s.book(x.bookId);ensure(b,'作品不存在',404);ensure(s.job(b.id)?.state!=='running','请先停止任务再更换参考');const text=x.input.text;ensure(typeof text==='string'&&text.length>100&&text.length<=100000,'参考需为100—100000字符本人TXT',400);const ps=text.split(/\n\s*\n/).filter(Boolean),sentences=text.split(/[。！？!?]/).filter(Boolean),dialogue=(text.match(/[“「][^”」]+[”」]/g)||[]).join('');const metrics={paragraphs:ps.length,meanParagraphHan:Math.round(han(text)/Math.max(1,ps.length)),meanSentenceHan:Math.round(han(text)/Math.max(1,sentences.length)),dialogueFraction:Math.round(han(dialogue)/Math.max(1,han(text))*100)};b.reference={text,hash:hash(text),metrics,source:'本人提供TXT',method:'本地统计，非模型文学分析'};b.style=(b.style||'')+'\n本人参考的抽象方法：段落平均约'+metrics.meanParagraphHan+'汉字；句长约'+metrics.meanSentenceHan+'汉字；对白约'+metrics.dialogueFraction+'%。仅学习叙述、对白和节奏，不复制角色情节或长句。';s.saveBook(b);result={ok:true,metrics,modelCalls:0};}
   else if(x.action==='planSave'){const b=s.book(x.bookId);ensure(b,'作品不存在',404);ensure(s.job(b.id)?.state!=='running','请先停止任务');ensure(x.input.baseHash===(b.planHash||hash(b.plan)),'规划已变化，保留输入');const done=s.chapters(b.id).filter(c=>c.body);const plan=x.input.plan;ensure(plan?.bible&&Array.isArray(plan.outlines),'规划格式无效',400);for(const c of done)ensure(JSON.stringify(plan.outlines.find(o=>o.number===c.number))===JSON.stringify(b.plan?.outlines.find(o=>o.number===c.number)),'不能改动已开始章节的规划');b.plan=plan;b.planHash=hash(plan);s.saveBook(b);result=b;}
   else throw Object.assign(new Error('未知操作'),{status:400});return json({ok:true,result});}
  return json({error:'此接口已升级。请安装V2独立安卓App。旧操作不会启动模型。'},410);

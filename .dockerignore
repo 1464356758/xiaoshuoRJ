@@ -18,3 +18,9 @@ cloud-server/.env
 **/*.db*
 **/*.p12
 **/*.keystore
+!v2/
+!v2/Dockerfile
+!v2/package.json
+!v2/server/
+!v2/server/**
+v2/data/

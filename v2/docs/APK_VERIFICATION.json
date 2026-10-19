@@ -1,0 +1,20 @@
+{
+  "file": "NovelFactory-V2-2.0.0.apk",
+  "version": "2.0.0",
+  "versionCode": 19,
+  "package": "cn.novelfactory.personal",
+  "bytes": 41437,
+  "sha256": "2b98b98e0145e47a6de5131ea0fa18b1d252cbe9e2e8db763208425a6e2b1f6f",
+  "signature": "Verifies\nVerified using v1 scheme (JAR signing): true\nVerified using v2 scheme (APK Signature Scheme v2): true\nVerified using v3 scheme (APK Signature Scheme v3): true\nVerified using v3.1 scheme (APK Signature Scheme v3.1): false\nVerified using v4 scheme (APK Signature Scheme v4): false\nVerified for SourceStamp: false\nNumber of signers: 1\nSigner #1 certificate DN: CN=Novel Factory Personal, OU=Personal Apps\nSigner #1 certificate SHA-256 digest: 1c913e9304e40677de03d693eabc032118f51b7145fe769563925a198c0f54ff\nSigner #1 certificate SHA-1 digest: 5b0b1786101ecbf0bd67cfd63b11ad954d1ec775\nSigner #1 certificate MD5 digest: bdb88edc4c9837f274a7e4f38ba8bc6c\nSigner #1 key algorithm: RSA\nSigner #1 key size (bits): 3072\nSigner #1 public key SHA-256 digest: 4780d1ba0dd17ac7a8d1e36b87d832daaaa7ec28bfeaa1942d66d82b6080a81c\nSigner #1 public key SHA-1 digest: 501362a195308a4f4430d24d5981c51c3bd1ce4d\nSigner #1 public key MD5 digest: 9fa0400d65b808518be21a9d4c5e033a\n",
+  "manifest": "package: name='cn.novelfactory.personal' versionCode='19' versionName='2.0.0' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'\nminSdkVersion:'23'\ntargetSdkVersion:'35'\nuses-permission: name='android.permission.INTERNET'\napplication-label:'小说工厂 V2'\napplication-icon-160:'res/drawable/ic_launcher.xml'\napplication: label='小说工厂 V2' icon='res/drawable/ic_launcher.xml'\nlaunchable-activity: name='cn.novelfactory.personal.MainActivity'  label='' icon=''\nfeature-group: label=''\n  uses-feature: name='android.hardware.faketouch'\n  uses-implied-feature: name='android.hardware.faketouch' reason='default feature for all apps'\nmain\nsupports-screens: 'small' 'normal' 'large' 'xlarge'\nsupports-any-density: 'true'\nlocales: '--_--'\ndensities: '160'\n",
+  "sources": {
+    "AndroidManifest.xml": "ce3d4406590f0ef1e4c4b483a76a04fa06b0120b7486da6213572bbfd806d50e",
+    "build.py": "a49b999e0ab65120e28b21cc8138776c61037d2ff9a41feebb9b5dae0a93e4a1",
+    "res/drawable/ic_launcher.xml": "52e3049452ff875905ecf27105f14a64ceaeb283b7cc68457346ddb19dd716a5",
+    "src/cn/novelfactory/personal/CloudVault.java": "eb30d18762885e333d3a57df47574913b4b772dae7506d9e1c24a73a6f8dda23",
+    "src/cn/novelfactory/personal/MainActivity.java": "3ffd2359706a3da7a817731f1459a86fc9a48dca5f85e942e734021bd5226818"
+  },
+  "ui": "native-java",
+  "webview": false,
+  "realDeviceVerified": false
+}
