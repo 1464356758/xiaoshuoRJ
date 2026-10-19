@@ -1,3 +1,11 @@
+# 最新补丁：云端0.14.1 / 安卓0.15.1
+
+2026-10-19T00:16:03.597Z，f3ca6201-a6fe-43b3-982b-afdf4c7c0c4f已部署终态SUCCESS，固定源码b4d393eecc00eb5f088dee57f6c410a704daa34d。仅修复维护时编辑模型/新密钥被一起锁住；settings服务端强制spendEnabled=false，实际模型入口仍维护拦截。原项目、服务、production、/data卷、HTTPS地址和UUID全部沿用。
+
+实际HTTPS读回0.14.1/modelApiDisabled=true、费用false/revision4；真实首章8687字/78分/attempt3、原稿hash和累计23条账目与更新前一致，最近一小时0条。没有替用户填写新Key或真实模型试跑。281项程序、TypeScript和最终同签名0.15.1 APK的23项手机界面测试通过。
+
+以下为历史部署记录。
+
 # 当前云端0.14.0 / 安卓0.15.0
 
 2026-10-18T23:57:28.147Z，部署386b369b-ccda-46c3-9c54-f5b7a5c707d8终态SUCCESS，固定源码05f45afcd7ecb8082d5bb324d4d393373787773b。复用原项目2b3536c7-bc05-4787-9a1a-63f5396a8bfa、服务8dfb074f-1290-467a-9f18-0464946c073c、production环境和/data原卷，1副本在线，无待应用变更。公网HTTPS来源和服务器UUID不变。
