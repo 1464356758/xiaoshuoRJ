@@ -14,7 +14,7 @@ export default function ModelSettingsPanel({cfg,saved,apiKey,onApiKey,keys,onKey
   const allKeys={planner:apiKey,...keys};
   const dirty=modelSettingsDirty(cfg,saved,allKeys),gaps=modelSettingsGaps(cfg,saved,allKeys);
   const shared=!cfg.writerProvider&&!cfg.reviewProvider;
-  const locked=busy||active||maintenance;
+  const locked=busy||active;
   function edit(patch:any,reviewFee=false){onChange({...cfg,...patch,...(reviewFee?{spendEnabled:false}:{})});}
   function mode(value:string){
     if((value==='shared')===shared)return;
@@ -47,7 +47,7 @@ export default function ModelSettingsPanel({cfg,saved,apiKey,onApiKey,keys,onKey
   }
   return <section className="card model-settings-panel" aria-label="模型配置表单">
     <div className="model-form-summary" role="status"><strong>{dirty?'有未保存的模型配置':'当前显示云端已保存的配置'}</strong><p>① 填写模型与密钥　② 核对费用　③ 保存后返回创作控制台</p><p>策划：{status('planner')} · 正文：{status('writer')} · 审核：{status('review')}</p></div>
-    {maintenance&&<p className="model-form-alert" role="status">模型接口维护停用。密钥与费用设置已锁定，仍可读取已保存结果。</p>}
+    {maintenance&&<p className="model-form-alert" role="status">付费调用维护停用。可以修改模型参数和保存新密钥，保存不会请求模型；费用授权和连接测试继续停用。</p>}
     {active&&<p className="model-form-alert" role="status">云端任务正在执行。请返回创作控制台暂停，再修改模型或测试连接。</p>}
     <fieldset disabled={locked} className="model-form-fields">
       <legend>密钥使用方式</legend>
@@ -71,12 +71,11 @@ export default function ModelSettingsPanel({cfg,saved,apiKey,onApiKey,keys,onKey
       <div className="model-role-card"><h2>费用上限</h2><p className="small-note">以下是你允许本软件使用的上限，实际扣费以供应商账单为准。</p><div className="form-grid">{moneyInput('monthLimit','月度最高费用（元）')}{moneyInput('bookLimit','每本书最高费用（元）')}{moneyInput('taskLimit','单次调用最高费用（元）')}</div></div>
       <details className="model-advanced"><summary>高级设置与连接测试</summary><div className="form-grid">
         <label className="field"><span>模型最大输出token（以供应商为准）</span><Input aria-label="模型最大输出token（以供应商为准）" type="number" min="64" max="65536" value={cfg.maxOutputTokens??''} onChange={e=>edit({maxOutputTokens:number(e.target.value)})}/></label>
-        {moneyInput('chapterLimit','单章模型费用上限（元，留空沿用单书上限）')}
-        <label className="field"><span>新章节分段目标（汉字）</span><Input aria-label="新章节分段目标（汉字）" type="number" min="1000" max="3500" value={cfg.segmentWords??''} onChange={e=>edit({segmentWords:number(e.target.value)})}/></label>
-      </div><p className="small-note">连接测试会请求真实模型，可能计费。请先保存配置与费用授权；测试成功仅代表接口可用。</p><div className="button-row">{[['planner','策划'],...roles].map(([slot,label])=><Button variant="outline" key={slot} disabled={dirty||!saved.spendEnabled||gaps.length>0} onClick={()=>onTest(slot)}>测试{label}连接（可能计费）</Button>)}</div></details>
+        {moneyInput('chapterLimit','单章模型费用上限（元，留空为2元）')}
+      </div><p className="small-note">整章写作1次、每轮整章返修1次、每次全文审核1次，最多5审。输出受已保存token与费用上限约束。连接测试可能计费，维护期间不可执行。</p><div className="button-row">{[['planner','策划'],...roles].map(([slot,label])=><Button variant="outline" key={slot} disabled={maintenance||dirty||!saved.spendEnabled||gaps.length>0} onClick={()=>onTest(slot)}>测试{label}连接（可能计费）</Button>)}</div></details>
     </fieldset>
     <div className="model-save-bar">
-      <label className="model-fee-consent"><input aria-label="允许模型调用费用" type="checkbox" disabled={locked} checked={!!cfg.spendEnabled} onChange={e=>edit({spendEnabled:e.target.checked})}/><span>我已核对模型、单价和上限，允许由我启动的任务与连接测试调用模型。</span></label>
+      <label className="model-fee-consent"><input aria-label="允许模型调用费用" type="checkbox" disabled={locked||maintenance} checked={!maintenance&&!!cfg.spendEnabled} onChange={e=>edit({spendEnabled:e.target.checked})}/><span>{maintenance?'当前仅保存配置，费用授权保持关闭。':'我已核对模型、单价和上限，允许由我启动的任务与连接测试调用模型。'}</span></label>
       {message&&<p className={message.kind==='error'?'negative':'model-save-message'} role={message.kind==='error'?'alert':'status'}>{message.text}</p>}
       <div className="model-save-actions"><Button disabled={locked} onClick={onSave}>{busy?'正在处理，请稍候…':'保存模型配置'}</Button><Button variant="outline" disabled={busy} onClick={onReload}>核对云端保存结果</Button></div>
       <p className="small-note">保存不调用模型。{dirty?'当前更改还没有保存。':saved.spendEnabled?'云端费用授权已开启。':'云端费用授权尚未开启。'}</p>

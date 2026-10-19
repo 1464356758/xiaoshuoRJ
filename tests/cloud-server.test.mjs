@@ -37,6 +37,22 @@ test('维护停用在真实API入口阻断连接测试和创作，即使旧App�
   }finally{if(previous===undefined)delete process.env.NOVEL_MODEL_API_DISABLED;else process.env.NOVEL_MODEL_API_DISABLED=previous;await x.cleanup();}
 });
 
+test('维护期间保存新模型和角色密钥成功，服务端强制费用关闭且零供应商请求',async()=>{
+  let network=0;const x=await setup({invoke:async()=>{network++;throw new Error('SYNTHETIC must not call model');}}),previous=process.env.NOVEL_MODEL_API_DISABLED;
+  try{
+    await configured(x.service,x.directory);const headers=await authorization(x.directory,x.service),before=await config(x.service.store),secrets=JSON.parse(await readFile(join(x.directory,'server-secrets.json'),'utf8'));
+    process.env.NOVEL_MODEL_API_DISABLED='1';
+    const input={revision:before.revision,model:'SYNTHETIC_CHANGED_MODEL',apiKey:'SYNTHETIC_NEW_SHARED_KEY',writerProvider:'deepseek',writerModel:'SYNTHETIC_WRITER_MODEL',writerApiKey:'SYNTHETIC_NEW_WRITER_KEY',writerInputPrice:1,writerOutputPrice:1,reviewProvider:'deepseek',reviewModel:'SYNTHETIC_REVIEW_MODEL',reviewApiKey:'SYNTHETIC_NEW_REVIEW_KEY',reviewInputPrice:1,reviewOutputPrice:1,spendEnabled:true};
+    const request=()=>new Request('https://cloud.example/api/workspace',{method:'POST',headers,body:JSON.stringify({action:'settings',input})});
+    const r=await x.service.dispatch(request());assert.equal(r.status,200);const result=(await r.json()).result,cfg=await config(x.service.store);
+    assert.equal(result.spendEnabled,false);assert.equal(result.hasKey,true);assert.equal(result.writerHasKey,true);assert.equal(result.reviewHasKey,true);assert.ok(!JSON.stringify(result).includes('SYNTHETIC_NEW_'));
+    const {seal}=await import('../lib/model.mjs');for(const [field,value] of [['apiKeyEncrypted',input.apiKey],['writerApiKeyEncrypted',input.writerApiKey],['reviewApiKeyEncrypted',input.reviewApiKey]])assert.equal(await seal(cfg[field],secrets.encryptionKey,true),value);
+    assert.equal(cfg.model,input.model);assert.equal(cfg.spendEnabled,false);assert.equal((await x.service.dispatch(request())).status,400);
+    const test=await x.service.dispatch(new Request('https://cloud.example/api/workspace',{method:'POST',headers,body:JSON.stringify({action:'testConnection',role:'writer'})}));assert.equal(test.status,400);assert.match((await test.json()).error,/维护停用/);
+    assert.equal(network,0);assert.equal((await x.service.db.prepare('SELECT COUNT(*) AS n FROM calls').first()).n,0);
+  }finally{if(previous===undefined)delete process.env.NOVEL_MODEL_API_DISABLED;else process.env.NOVEL_MODEL_API_DISABLED=previous;await x.cleanup();}
+});
+
 test('私有云API可免费复用完整修订响应，仍要求控制凭证并保留费用和三轮上限',async()=>{
   let calls=0;const x=await setup({invoke:async()=>{calls++;throw new Error('SYNTHETIC no supplier calls expected');}});
   try{

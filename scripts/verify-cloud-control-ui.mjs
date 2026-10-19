@@ -184,12 +184,16 @@ try{
   await page.locator('.chapter-row').first().click();const panel=page.getByRole('region',{name:'审核与修改'});await panel.getByText(/已按五审上限放行，待人工精修/).waitFor();await panel.getByText(/实际审核 81\/100/).waitFor();
   assert.equal(await panel.getByRole('button',{name:'按审稿意见修订',exact:true}).count(),0);assert.equal(x.counts('startEditorRevision'),0);
  },{seed:true,withBook:true,rewrite:true,lowReview:true});
- await scenario('maintenance lock is visible, disables creation and key entry, and never calls the supplier',async x=>{
+ await scenario('maintenance permits model and new key saving while blocking paid actions',async x=>{
   const previous=process.env.NOVEL_MODEL_API_DISABLED;process.env.NOVEL_MODEL_API_DISABLED='1';
   try{
-   const page=await x.open({view:'dashboard'});await page.getByText('模型接口维护停用：所有创作、修订、审核及连接测试均被服务端拦截。可以查看与导出已有稿件，请勿重新填入密钥启动。',{exact:true}).waitFor();
+   const page=await x.open({view:'dashboard'});await page.getByText('模型付费调用已停用：可以更新模型参数和密钥，保存不会调用API。创作、修订、审核及连接测试仍被拦截。',{exact:true}).waitFor();
    assert.equal(await page.getByRole('button',{name:'启动云端自动创作',exact:true}).isDisabled(),true);assert.equal(x.counts('startJob'),0);
-   const settingsPage=await x.open();assert.equal(await settingsPage.getByLabel('API密钥',{exact:true}).isDisabled(),true);assert.equal(await settingsPage.getByRole('button',{name:'保存模型配置',exact:true}).isDisabled(),true);assert.equal(x.simulated(),0);
+   const settingsPage=await x.open();assert.equal(await settingsPage.getByLabel('API密钥',{exact:true}).isDisabled(),false);assert.equal(await settingsPage.getByRole('button',{name:'保存模型配置',exact:true}).isDisabled(),false);
+   const key='SYNTHETIC_ROTATED_KEY_NOT_REAL';await settingsPage.getByLabel('API密钥',{exact:true}).fill(key);await settingsPage.getByLabel('策划 / 默认模型',{exact:true}).fill('SYNTHETIC_CHANGED_MODEL');
+   assert.equal(await settingsPage.getByRole('checkbox',{name:'允许模型调用费用',exact:true}).isDisabled(),true);await settingsPage.getByRole('button',{name:'保存模型配置',exact:true}).click();await settingsPage.getByText('模型参数与密钥已保存。付费调用仍停用，没有请求模型。',{exact:true}).waitFor();
+   const cfg=await config(x.service.store);assert.equal(await seal(cfg.apiKeyEncrypted,x.secrets.encryptionKey,true),key);assert.equal(cfg.model,'SYNTHETIC_CHANGED_MODEL');assert.equal(cfg.spendEnabled,false);
+   await settingsPage.getByText('高级设置与连接测试',{exact:true}).click();assert.equal(await settingsPage.getByRole('button',{name:'测试策划连接（可能计费）',exact:true}).isDisabled(),true);assert.equal(x.simulated(),0);assert.equal((await x.service.store.cost(x.book.id)).calls.length,0);
   }finally{if(previous===undefined)delete process.env.NOVEL_MODEL_API_DISABLED;else process.env.NOVEL_MODEL_API_DISABLED=previous;}
  },{seed:true,withBook:true});
  console.log('UI AUDIT PASSED: '+passed+' scenarios; real supplier requests: 0; assets: '+(process.env.NOVEL_TEST_APK?'delivered APK':'source build'));
