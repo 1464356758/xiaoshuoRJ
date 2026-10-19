@@ -1,0 +1,31 @@
+{
+  "checkedAt": "2026-10-20T00:23:00+08:00",
+  "deployment": "be62107d-2993-4af9-bbad-1630b45ee48c",
+  "deploymentStatus": "SUCCESS",
+  "actualBuild": "bf45e33ba87276eefd116467d3f5d2fff78c128d",
+  "version": "2.0.0",
+  "protocol": 2,
+  "workerReady": true,
+  "originalIdentityRetained": true,
+  "migration": {
+    "books": 1,
+    "chapters": 2,
+    "records": 98,
+    "calls": 30,
+    "importedAt": "2026-10-19T16:23:31.064Z",
+    "paused": true
+  },
+  "originalManuscriptExactMatch": true,
+  "firstChapterHan": 8984,
+  "firstChapterScore": 79,
+  "firstChapterReviewCount": 5,
+  "originalVersionRecords": 6,
+  "legacyCallRecords": 30,
+  "newV2ModelSteps": 0,
+  "allJobsPaused": true,
+  "productionExportRestoredLocally": true,
+  "physicalBackupEvidence": "fixed startup code requires backup + integrity_check before serving; no independent remote file listing",
+  "apkSha256": "2b98b98e0145e47a6de5131ea0fa18b1d252cbe9e2e8db763208425a6e2b1f6f",
+  "actualAndroidDeviceVerified": false,
+  "realModelCallsDuringDevelopmentAndVerification": 0
+}
