@@ -11,7 +11,7 @@ import {startJob,pauseJob} from '../lib/jobs.mjs';
 import {seal} from '../lib/model.mjs';
 import {resolveModel} from '../lib/model-routing.mjs';
 import {craftFixture} from '../tests/craft-support.mjs';
-import {synthetic} from '../tests/workflow-support.mjs';
+import {synthetic,syntheticRevision} from '../tests/workflow-support.mjs';
 const modules=process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES;
 const {chromium}=await import(modules?modules+'/playwright/index.mjs':'playwright');
 await buildServer();
@@ -32,7 +32,7 @@ async function scenario(name,fn,{seed=false,withBook=false,width=390,height=844,
   if(process.env.NOVEL_UI_CASE&&!name.includes(process.env.NOVEL_UI_CASE))return;
   const directory=await mkdtemp(join(work,'case-'));
   let simulatedCalls=0;const simulatedRoles=[];
-  const service=await createCloudService({directory,autoStart:false,invoke:async(...args)=>{simulatedCalls++;simulatedRoles.push(args[4]);if(rewrite&&args[4]==='rewrite'){const c=(await args[0].list('chapter',args[2].id)).find(c=>c.status!=='locked');return {text:synthetic(878+c.attempt,1000),chapterComplete:true};}const r=await craftFixture(...args);if(lowReview&&args[4]==='review'){r.scores.commercial.score=10;r.issues.push({severity:'major',message:'SYNTHETIC missing action cost',quote:r.scores.commercial.quote,fix:'SYNTHETIC add a choice and lasting cost'});}return r;}});
+  const service=await createCloudService({directory,autoStart:false,invoke:async(...args)=>{simulatedCalls++;simulatedRoles.push(args[4]);if(rewrite&&args[4]==='rewrite'){const c=(await args[0].list('chapter',args[2].id)).find(c=>c.status!=='locked');return syntheticRevision(c,1000,878+c.attempt);}const r=await craftFixture(...args);if(lowReview&&args[4]==='review'){r.scores.commercial.score=10;r.issues.push({severity:'major',message:'SYNTHETIC missing action cost',quote:r.scores.commercial.quote,fix:'SYNTHETIC add a choice and lasting cost'});}return r;}});
   const secrets=JSON.parse(await readFile(join(directory,'server-secrets.json'),'utf8'));
   const headers={Authorization:'Bearer '+secrets.controlToken,'X-Novel-Server-Id':service.serverId,'Content-Type':'application/json'};
   if(seed)await settings(service.store,{apiKey:'SYNTHETIC_SAVED_KEY_NOT_REAL',spendEnabled:true},secrets.encryptionKey);
@@ -196,5 +196,20 @@ try{
    await settingsPage.getByText('高级设置与连接测试',{exact:true}).click();assert.equal(await settingsPage.getByRole('button',{name:'测试策划连接（可能计费）',exact:true}).isDisabled(),true);assert.equal(x.simulated(),0);assert.equal((await x.service.store.cost(x.book.id)).calls.length,0);
   }finally{if(previous===undefined)delete process.env.NOVEL_MODEL_API_DISABLED;else process.env.NOVEL_MODEL_API_DISABLED=previous;}
  },{seed:true,withBook:true});
+ await scenario('amount checks disabled hides caps and starts a zero-budget book without a missing-budget warning',async x=>{
+  await settings(x.service.store,{budgetChecksEnabled:false,monthLimit:0,bookLimit:0,taskLimit:0,chapterLimit:0,inputPrice:1,outputPrice:1},x.secrets.encryptionKey);
+  const book=await x.service.store.get(x.book.id);await x.service.store.save(book,{...book,budget:0});
+  const page=await x.open();assert.equal(await page.getByRole('checkbox',{name:'按金额上限暂停任务',exact:true}).isChecked(),false);
+  await page.getByText(/金额上限拦截已关闭/).waitFor();assert.equal(await page.getByLabel('月度最高费用（元）',{exact:true}).count(),0);
+  await page.getByRole('button',{name:'返回创作控制台',exact:true}).click();await page.getByRole('button',{name:'启动云端自动创作',exact:true}).click();
+  await until(()=>x.counts('startJob')===1);assert.equal((await x.service.store.get(x.book.id+':job')).status,'queued');assert.equal(x.simulated(),0);
+ },{seed:true,withBook:true});
+ await scenario('actual patch comparison and per-task acceptance are visible on the phone',async x=>{
+  await settings(x.service.store,{inputPrice:1,outputPrice:1},x.secrets.encryptionKey);await startJob(x.service.store,x.book.id,1);
+  for(let i=0;i<12;i++){await x.service.tick();if((await x.service.store.list('chapter',x.book.id))[0]?.reviewCount===2)break;}
+  await pauseJob(x.service.store,x.book.id);const c=(await x.service.store.list('chapter',x.book.id))[0];assert.equal(c.revisionEdits.patches.length,1);
+  const page=await x.open({view:'dashboard'});assert.equal(await page.locator('.workflow .active').count(),1);assert.match(await page.locator('.workflow .active').textContent(),/整章写作/);
+  await page.locator('.chapter-row').first().click();const panel=page.getByRole('region',{name:'审核与修改'});await panel.getByText('本轮实际修改 1 处 · 可对照原文',{exact:true}).click();await panel.getByText('修改前',{exact:true}).waitFor();await panel.getByText('修改后',{exact:true}).waitFor();await panel.getByText('本轮返修逐项验收',{exact:true}).click();assert.match(await panel.textContent(),/已解决/);
+ },{seed:true,withBook:true,rewrite:true,lowReview:true});
  console.log('UI AUDIT PASSED: '+passed+' scenarios; real supplier requests: 0; assets: '+(process.env.NOVEL_TEST_APK?'delivered APK':'source build'));
 }finally{await browser.close();await new Promise(resolve=>http.close(resolve));await rm(work,{recursive:true,force:true});}

@@ -93,3 +93,12 @@ test('account audit includes connection tests and missing books, while excluding
   const other=new Store(s.db,'another-owner');await other.db.prepare('INSERT INTO calls (id,owner,book,month,amount,status,data,created) VALUES (?,?,?,?,?,?,?,?)').bind('SYNTHETIC-foreign',other.owner,'SYNTHETIC','2026-10',999,'settled','{}',Date.now()).run();
   const a=await callAudit(s);assert.equal(a.totalCalls,2);assert.equal(a.lastHour.count,2);assert.equal(a.byBook.length,2);assert.equal(JSON.stringify(a).includes('NEVER EXPOSE'),false);assert.equal(JSON.stringify(a).includes('another-owner'),false);
 });
+
+test('explicitly disabled amount checks allow one accounted call despite zero limits and old spending, while rate limits still hold',async()=>{
+ const s=fresh(),b=await book(s),secret=await configured(s,{budgetChecksEnabled:false,monthLimit:0,bookLimit:0,taskLimit:0,chapterLimit:0});
+ await s.db.prepare('INSERT INTO calls (id,owner,book,month,amount,status,data,created) VALUES (?,?,?,?,?,?,?,?)').bind('SYNTHETIC-historical-cost',s.owner,b.id,monthKey(),100000000,'settled','{"chapter":1}',Date.now()-120000).run();
+ let http=0;const cfg=await config(s);await modelCall(s,cfg,{...b,budget:0,activeChapter:1},'SYNTHETIC','rewrite',secret,async()=>{http++;return reply();});assert.equal(http,1);assert.equal((await callAudit(s)).totalCalls,2);assert.equal((await config(s)).monthLimit,0);
+ for(let i=0;i<5;i++)await modelCall(s,cfg,{...b,budget:0},'SYNTHETIC','connection',secret,async()=>{http++;return reply();});
+ await assert.rejects(modelCall(s,cfg,b,'SYNTHETIC','write',secret,async()=>{http++;return reply();}),e=>e.code==='MODEL_MINUTE_LIMIT');assert.equal(http,6);
+ await settings(s,{spendEnabled:false},secret);await assert.rejects(modelCall(s,await config(s),b,'SYNTHETIC','write',secret,async()=>{http++;return reply();}),/尚未开启/);assert.equal(http,6);
+});

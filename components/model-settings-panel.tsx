@@ -60,7 +60,7 @@ export default function ModelSettingsPanel({cfg,saved,apiKey,onApiKey,keys,onKey
         {cfg.provider==='qwen'&&<label className="field"><span>策划北京业务空间ID</span><Input aria-label="策划北京业务空间ID" value={cfg.workspace||''} onChange={e=>{edit({workspace:e.target.value},true);onApiKey('');}}/></label>}
         {moneyInput('inputPrice','输入最高单价（元 / 百万token）')}
         {moneyInput('outputPrice','输出最高单价（元 / 百万token）')}
-      </div><p className="small-note">密钥只在这里输入。保存后密码框留空，使用“云端已保存”确认结果。<a href={providerInfo[cfg.provider as keyof typeof providerInfo]?.console} target="_blank" rel="noreferrer">打开官方控制台</a></p></div>
+      </div><p className="small-note">单价用于费用估算，不是预算上限；按供应商每百万token价格填写，不要为解除限制而填大。密钥只在这里输入。保存后密码框留空，使用“云端已保存”确认结果。<a href={providerInfo[cfg.provider as keyof typeof providerInfo]?.console} target="_blank" rel="noreferrer">打开官方控制台</a></p></div>
       {shared&&roles.some(([slot])=>cfg[slot+'Model']&&cfg[slot+'Model']!==cfg.model)&&<div className="model-role-card"><p>已存配置包含其他角色型号：{roles.map(([slot,name])=>name+' '+(cfg[slot+'Model']||cfg.model)).join('；')}。这些角色共用策划密钥和最高单价，请按最高费用核对。</p><Button variant="outline" onClick={()=>edit({writerModel:'',reviewModel:''},true)}>统一使用策划模型</Button></div>}
       {!shared&&roles.map(([slot,name])=><div className="model-role-card" key={slot}><h2>{name}角色</h2><div className="form-grid">
         {serviceSelect(slot,name+'服务商',true)}
@@ -68,14 +68,14 @@ export default function ModelSettingsPanel({cfg,saved,apiKey,onApiKey,keys,onKey
           {cfg[slot+'Provider']==='qwen'&&<label className="field"><span>{name}北京业务空间ID</span><Input aria-label={name+'北京业务空间ID'} value={cfg[slot+'Workspace']||''} onChange={e=>{edit({[slot+'Workspace']:e.target.value},true);onKeys({...keys,[slot]:''});}}/></label>}
           {moneyInput(slot+'InputPrice',name+'输入最高单价（元 / 百万token）')}{moneyInput(slot+'OutputPrice',name+'输出最高单价（元 / 百万token）')}</>:<p className="small-note">此角色沿用策划的服务商、密钥与最高单价。</p>}
       </div></div>)}
-      <div className="model-role-card"><h2>费用上限</h2><p className="small-note">以下是你允许本软件使用的上限，实际扣费以供应商账单为准。</p><div className="form-grid">{moneyInput('monthLimit','月度最高费用（元）')}{moneyInput('bookLimit','每本书最高费用（元）')}{moneyInput('taskLimit','单次调用最高费用（元）')}</div></div>
+      <div className="model-role-card"><h2>费用记录与金额拦截</h2><label className="checkbox-row"><input aria-label="按金额上限暂停任务" type="checkbox" checked={cfg.budgetChecksEnabled!==false} onChange={e=>edit({budgetChecksEnabled:e.target.checked})}/>按金额上限暂停任务</label>{cfg.budgetChecksEnabled===false?<p role="status">金额上限拦截已关闭。月度、单书、单章和单次金额不再阻止任务；用量与费用记录保留。每步只请求一次，停止与防重复请求继续生效。</p>:<><p className="small-note">以下是你允许本软件使用的上限，实际扣费以供应商账单为准。</p><div className="form-grid">{moneyInput('monthLimit','月度最高费用（元）')}{moneyInput('bookLimit','每本书最高费用（元）')}{moneyInput('taskLimit','单次调用最高费用（元）')}</div></>}</div>
       <details className="model-advanced"><summary>高级设置与连接测试</summary><div className="form-grid">
         <label className="field"><span>模型最大输出token（以供应商为准）</span><Input aria-label="模型最大输出token（以供应商为准）" type="number" min="64" max="65536" value={cfg.maxOutputTokens??''} onChange={e=>edit({maxOutputTokens:number(e.target.value)})}/></label>
-        {moneyInput('chapterLimit','单章模型费用上限（元，留空为2元）')}
-      </div><p className="small-note">整章写作1次、每轮整章返修1次、每次全文审核1次，最多5审。输出受已保存token与费用上限约束。连接测试可能计费，维护期间不可执行。</p><div className="button-row">{[['planner','策划'],...roles].map(([slot,label])=><Button variant="outline" key={slot} disabled={maintenance||dirty||!saved.spendEnabled||gaps.length>0} onClick={()=>onTest(slot)}>测试{label}连接（可能计费）</Button>)}</div></details>
+        {cfg.budgetChecksEnabled!==false&&moneyInput('chapterLimit','单章模型费用上限（元，留空为2元）')}
+      </div><p className="small-note">整章写作1次、每轮整章返修1次、每次全文审核1次，最多5审。返修一次返回定位修改，合并后全文只审核一次。输出受已保存token上限约束。连接测试可能计费，维护期间不可执行。</p><div className="button-row">{[['planner','策划'],...roles].map(([slot,label])=><Button variant="outline" key={slot} disabled={maintenance||dirty||!saved.spendEnabled||gaps.length>0} onClick={()=>onTest(slot)}>测试{label}连接（可能计费）</Button>)}</div></details>
     </fieldset>
     <div className="model-save-bar">
-      <label className="model-fee-consent"><input aria-label="允许模型调用费用" type="checkbox" disabled={locked||maintenance} checked={!maintenance&&!!cfg.spendEnabled} onChange={e=>edit({spendEnabled:e.target.checked})}/><span>{maintenance?'当前仅保存配置，费用授权保持关闭。':'我已核对模型、单价和上限，允许由我启动的任务与连接测试调用模型。'}</span></label>
+      <label className="model-fee-consent"><input aria-label="允许模型调用费用" type="checkbox" disabled={locked||maintenance} checked={!maintenance&&!!cfg.spendEnabled} onChange={e=>edit({spendEnabled:e.target.checked})}/><span>{maintenance?'当前仅保存配置，费用授权保持关闭。':'我已核对模型和记账单价，允许由我启动的任务与连接测试调用模型。'}</span></label>
       {message&&<p className={message.kind==='error'?'negative':'model-save-message'} role={message.kind==='error'?'alert':'status'}>{message.text}</p>}
       <div className="model-save-actions"><Button disabled={locked} onClick={onSave}>{busy?'正在处理，请稍候…':'保存模型配置'}</Button><Button variant="outline" disabled={busy} onClick={onReload}>核对云端保存结果</Button></div>
       <p className="small-note">保存不调用模型。{dirty?'当前更改还没有保存。':saved.spendEnabled?'云端费用授权已开启。':'云端费用授权尚未开启。'}</p>

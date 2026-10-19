@@ -2,7 +2,7 @@
 // No real API key, novel, provider network request or quality claim.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {fresh,book,configured,fixture,synthetic,review,writeOne} from './workflow-support.mjs';
+import {fresh,book,configured,fixture,synthetic,review,writeOne,syntheticRevision} from './workflow-support.mjs';
 import {craftFixture} from './craft-support.mjs';
 import {createBook,step,saveChapter,exportBook,snapshot,config} from '../lib/engine.mjs';
 import {startJob,runJobStep,startEditorRevision,pauseJob} from '../lib/jobs.mjs';
@@ -16,7 +16,7 @@ import {estimateBookCost,estimateScenarios} from '../lib/cost-estimate.mjs';
 async function setup(words=1000,total=3){const s=fresh(),secret=await configured(s,{monthLimit:100,bookLimit:100,chapterLimit:2});const b=await createBook(s,{targetWords:words,totalChapters:total,budget:100},crypto.randomUUID());return {s,b,secret};}
 function supplier(roles,{low=false,badFacts=false}={}){return async(...args)=>{
   const [s,cfg,b,,role]=args;roles.push(role);
-  if(role==='rewrite'){const c=(await s.list('chapter',b.id)).find(c=>c.status!=='locked');return {text:synthetic(983+c.attempt, b.targetWords),chapterComplete:true};}
+  if(role==='rewrite'){const c=(await s.list('chapter',b.id)).find(c=>c.status!=='locked');return syntheticRevision(c,b.targetWords,983+c.attempt);}
   const out=await craftFixture(...args);
   if(role==='review'&&low){out.scores.commercial.score=10;out.issues.push({severity:'major',message:'SYNTHETIC missing action cost',quote:out.scores.commercial.quote,fix:'SYNTHETIC: replace the opening explanation with a choice and a lasting cost'});if(badFacts)out.changes[0].from='SYNTHETIC invented prior';}
   return out;
@@ -94,7 +94,7 @@ test('legacy three-repair blocked chapter resumes with saved completed reviews, 
   b=await s.get(b.id);const {singleCallProtocol,...rest}=b;b=await s.save(b,{...rest,workflowVersion:2});
   c=await s.save(c,{...c,status:'blocked',attempt:3,gate:{pass:false,score:76,issues:[{code:'SCORE',message:'总分76，不足85'}]}});await startJob(s,b.id,1);
   assert.equal((await s.get(c.id)).reviewCount,3);const roles=[],simulate=async(...a)=>{
-    roles.push(a[4]);if(a[4]==='rewrite')return {text:synthetic(983+(await s.get(c.id)).attempt,1000)};
+    roles.push(a[4]);if(a[4]==='rewrite'){const now=await s.get(c.id);return syntheticRevision(now,1000,983+now.attempt);}
     const r=await fixture(...a);if(a[4]==='review')r.scores.commercial.score=10;return r;
   };
   assert.equal((await finish(s,b,secret,simulate)).status,'completed');assert.deepEqual(roles,['rewrite','review','rewrite','review']);c=await s.get(c.id);assert.equal(c.reviewCount,5);assert.equal(c.attempt,5);assert.equal(c.needsPolish,true);assert.ok((await s.list('version',b.id)).some(v=>v.content===original));
@@ -138,4 +138,12 @@ test('a legacy chapter with five evidenced saved audits releases on explicit con
 test('invalid planning response stops once and persists its request receipt across explicit restart',async()=>{
   const {s,b,secret}=await setup();await startJob(s,b.id,1);let requests=0;const invalid=async()=>{requests++;return {title:'SYNTHETIC incomplete plan'};};
   assert.equal((await runJobStep(s,b.id,secret,invalid)).job.status,'blocked');await startJob(s,b.id,1);assert.equal((await runJobStep(s,b.id,secret,invalid)).job.status,'blocked');assert.equal(requests,1);assert.equal((await s.get(b.id)).phaseCalls[0].status,'failed');
+});
+
+test('a fifth review claiming unchanged material as a fix keeps the issue open, releases honestly and never buys a sixth audit',async()=>{
+ const {s,b,secret}=await setup(),roles=[],simulate=supplier(roles,{low:true});await startJob(s,b.id,1);
+ while((await s.list('chapter',b.id))[0]?.reviewCount!==4)await runJobStep(s,b.id,secret,simulate);
+ await runJobStep(s,b.id,secret,simulate);const r=await runJobStep(s,b.id,secret,async(...a)=>{roles.push(a[4]);const out=await craftFixture(...a),c=(await s.list('chapter',b.id))[0];out.revisionChecks=out.revisionChecks.map(x=>({...x,quote:c.content.slice(100,112),patchIds:['P1']}));return out;});
+ const c=(await s.list('chapter',b.id))[0];assert.equal(r.job.status,'completed');assert.equal(c.reviewCount,5);assert.equal(c.gate.pass,false);assert.equal(c.needsPolish,true);assert.ok(c.review.revisionChecks.every(x=>x.closed===false&&x.modelClosed===true));assert.ok(c.gate.issues.some(x=>x.code==='DIRECTOR_OPEN_TASK'));
+ for(let i=0;i<5;i++)await runJobStep(s,b.id,secret,simulate);assert.equal(roles.filter(x=>x==='review').length,5);assert.equal(roles.filter(x=>x==='rewrite').length,4);
 });

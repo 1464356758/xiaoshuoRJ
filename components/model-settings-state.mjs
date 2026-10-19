@@ -22,7 +22,7 @@ export function sharedRoleDraft(draft) {
   return {...draft,writerProvider:'',reviewProvider:'',writerModel:'',reviewModel:'',spendEnabled:false};
 }
 
-export const editableModelFields=['provider','model','writerModel','reviewModel','writerProvider','reviewProvider','writerInputPrice','writerOutputPrice','reviewInputPrice','reviewOutputPrice','chapterLimit','segmentWords','inputPrice','outputPrice','monthLimit','bookLimit','taskLimit','maxOutputTokens','spendEnabled','workspace','writerWorkspace','reviewWorkspace'];
+export const editableModelFields=['budgetChecksEnabled','provider','model','writerModel','reviewModel','writerProvider','reviewProvider','writerInputPrice','writerOutputPrice','reviewInputPrice','reviewOutputPrice','chapterLimit','segmentWords','inputPrice','outputPrice','monthLimit','bookLimit','taskLimit','maxOutputTokens','spendEnabled','workspace','writerWorkspace','reviewWorkspace'];
 export function modelSettingsDirty(draft,saved,keys={}) {
   if(!saved)return false;
   if(keys.planner?.trim()||draft.writerProvider&&keys.writer?.trim()||draft.reviewProvider&&keys.review?.trim())return true;
@@ -38,6 +38,7 @@ export function modelInputProblems(draft,saved,keys={}) {
     if(key&&(key.length>1000||/\s/.test(key)))errors.push(name+'：密钥中含空格或换行，请只粘贴这一把完整密钥');
   }
   for(const [field,label,max] of [['monthLimit','月度费用上限',10000],['bookLimit','单书费用上限',10000],['taskLimit','单次调用上限',10000],['inputPrice','策划输入单价',100000],['outputPrice','策划输出单价',100000],['writerInputPrice','正文输入单价',100000],['writerOutputPrice','正文输出单价',100000],['reviewInputPrice','审核输入单价',100000],['reviewOutputPrice','审核输出单价',100000],['chapterLimit','单章费用上限',10000]]){
+    if(draft.budgetChecksEnabled===false&&['monthLimit','bookLimit','taskLimit','chapterLimit'].includes(field))continue;
     const value=draft[field];
     if(['monthLimit','bookLimit','taskLimit'].includes(field)&&value==null)errors.push(label+'需要填写');
     if(value!=null&&(!Number.isFinite(value)||value<0||value>max))errors.push(label+'需在0到'+max+'之间');
@@ -58,8 +59,10 @@ export function modelSettingsInput(draft,keys) {
 export function creationSettingsProblems(settings,book) {
   const problems=modelSettingsGaps(settings,settings);
   if(!settings.spendEnabled)problems.push('勾选费用授权并保存');
+  if(settings.budgetChecksEnabled!==false){
   for(const [field,label] of [['monthLimit','月度费用上限'],['bookLimit','单书费用上限'],['taskLimit','单次调用上限']])if(!settings[field])problems.push(label+'需大于0');
   if(!book?.budget)problems.push('当前作品预算为0，请在本书预算中调整');
   if(settings.chapterLimit===0)problems.push('单章费用上限为0，无法生成正文');
+  }
   return problems;
 }
