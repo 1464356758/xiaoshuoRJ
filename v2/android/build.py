@@ -11,7 +11,7 @@ def run(cmd,stdin=None):
 with tempfile.TemporaryDirectory(prefix='novel-v2-android-') as temp:
  w=pathlib.Path(temp);(w/'gen').mkdir();(w/'classes').mkdir();(w/'dex').mkdir()
  run([tools/'aapt2','compile','--dir',root/'res','-o',w/'resources.zip'])
- run([tools/'aapt2','link','-o',w/'base.apk','-I',platform,'--manifest',root/'AndroidManifest.xml','--java',w/'gen','--version-code','19','--version-name','2.0.0',w/'resources.zip'])
+ run([tools/'aapt2','link','-o',w/'base.apk','-I',platform,'--manifest',root/'AndroidManifest.xml','--java',w/'gen','--version-code','20','--version-name','2.0.1',w/'resources.zip'])
  run(['java','-m','jdk.compiler/com.sun.tools.javac.Main','-source','8','-target','8','-bootclasspath',str(tools/'core-lambda-stubs.jar')+':'+str(platform),'-d',w/'classes',*sorted(root.glob('src/**/*.java')),*w.glob('gen/**/*.java')])
  run(['java','-cp',tools/'lib/d8.jar','com.android.tools.r8.D8','--lib',platform,'--min-api','23','--output',w/'dex',*sorted(w.glob('classes/**/*.class'))])
  shutil.copy2(w/'base.apk',w/'unsigned.apk')
@@ -21,7 +21,7 @@ with tempfile.TemporaryDirectory(prefix='novel-v2-android-') as temp:
  signer=['java','-jar',tools/'lib/apksigner.jar'];run(signer+['sign','--ks',private/'novel-factory-release.p12','--ks-key-alias','novel-factory','--ks-pass','stdin','--key-pass','stdin','--out',out,w/'aligned.apk'],password+'\n'+password+'\n');verify=run(signer+['verify','--verbose','--print-certs',out]);run([tools/'zipalign','-c','4',out]);manifest=run([tools/'aapt2','dump','badging',out])
  with zipfile.ZipFile(out) as z:
   assert 'classes.dex' in z.namelist();assert not any(x.startswith('assets/') or x.endswith(('.p12','.jks','.sqlite','.db','.html','.js')) for x in z.namelist())
- assert "package: name='cn.novelfactory.personal' versionCode='19' versionName='2.0.0'" in manifest
+ assert "package: name='cn.novelfactory.personal' versionCode='20' versionName='2.0.1'" in manifest
  sources={str(f.relative_to(root)):hashlib.sha256(f.read_bytes()).hexdigest() for f in root.rglob('*') if f.is_file() and 'build' not in f.parts}
- metadata={'file':out.name,'version':'2.0.0','versionCode':19,'package':'cn.novelfactory.personal','bytes':out.stat().st_size,'sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'signature':verify,'manifest':manifest,'sources':sources,'ui':'native-java','webview':False,'realDeviceVerified':False}
+ metadata={'file':out.name,'version':'2.0.1','versionCode':20,'package':'cn.novelfactory.personal','bytes':out.stat().st_size,'sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'signature':verify,'manifest':manifest,'sources':sources,'ui':'native-java','webview':False,'realDeviceVerified':False}
  out.with_suffix('.verification.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2));print(json.dumps({k:v for k,v in metadata.items() if k not in ['signature','manifest','sources']},ensure_ascii=False))
