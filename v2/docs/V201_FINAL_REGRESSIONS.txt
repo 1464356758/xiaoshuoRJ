@@ -1,0 +1,16 @@
+✔ native UiSession on JVM: polling never renders forms; late replies cannot switch pages/books or replace newer reads (1234.411562ms)
+✔ short draft is directly inspectable; reads/new-book save preserve original and make zero additional provider calls (379.822509ms)
+✔ explicit replacement requires consent and base hash; concurrent submissions share one stable extra step then pause before review (332.470832ms)
+✔ another short replacement stops; only explicit confirmation of the new failed step can create one further request (185.967361ms)
+✔ unknown, partial and truncated results cannot use explicit replacement as a hidden retry (332.275618ms)
+✔ short candidate can be manually completed and saved to an empty chapter with no provider call (95.653949ms)
+✔ stopped queued replacement resumes the same request and explicit current config changes only its unsent snapshot (163.475289ms)
+✔ replacement identity survives database/engine reopen, without reusing applied/superseded responses (119.096319ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1834.227558

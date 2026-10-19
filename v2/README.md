@@ -2,7 +2,7 @@
 
 独立安卓原生Java界面 + Node.js 24 LTS + SQLite。没有网页壳、GPT代理或手机执行器。
 
-当前云端2.0.0已上线，实际运行build bf45e33ba87276eefd116467d3f5d2fff78c128d。开发分支：`rebuild/v2-20261019`。旧实现保留原目录，旧盘 `/data/novel.sqlite` 不与V2库 `/data/v2/novel.sqlite` 混写。
+当前云端2.0.1已上线，实际运行build baf6612ce8150086acc577f3b523132193dc6053，源码main。APK2.0.1/code20覆盖安装。[表单与候选恢复修复](docs/V201-REGRESSION.md)。旧实现保留原目录，旧盘 `/data/novel.sqlite` 不与V2库 `/data/v2/novel.sqlite` 混写。
 
 - 运行：`node v2/server/main.mjs`（设置 DATA_DIR、PORT、PUBLIC_ORIGIN）
 - 测试：`node --test v2/test/*.test.mjs`

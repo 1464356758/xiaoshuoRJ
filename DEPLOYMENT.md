@@ -1,21 +1,19 @@
-# 当前部署：V2 2.0.0 SUCCESS
+# 当前部署：V2 2.0.1 SUCCESS
 
-云端：https://novel-factory-cloud-production.up.railway.app
+2026-10-20 04:06（上海）：V2云端2.0.1已上线，部署56e73456-f527-4999-a6b1-137592ebff6c SUCCESS，实际build baf6612ce8150086acc577f3b523132193dc6053。APK2.0.1/code20需覆盖安装，云端地址和凭证沿用。
 
-2026-10-20 00:23（上海）：部署be62107d-2993-4af9-bbad-1630b45ee48c终态SUCCESS，UTC完成2026-10-19T16:23:40.154Z。平台实际构建与/api/status build为bf45e33ba87276eefd116467d3f5d2fff78c128d。服务配置source.commitSha仍列58719c77d5cc4283148c6116a459a2abfa9d88dd，但不能将配置当实际来源；运行源码应以平台构建元数据与服务回读为准。两者执行源码相同。
+修复新建/编辑页被5秒轮询切回的问题，后台只更新进度文字，固定显示“模型设置”。本机保留表单与编辑草稿。短候选可直接查看、载入人工编辑或明确额外重写一次；新重写成功后先暂停，点击继续才审核。原稿、候选、usage与五审次数保留。
 
-项目2b3536c7-bc05-4787-9a1a-63f5396a8bfa / production de2133f0-5546-493a-8b35-e3373bed5dce / service 8dfb074f-1290-467a-9f18-0464946c073c / volume ba0c3e58-1779-4eed-870f-26051f8a9bd9。原域名、盘、单副本及资源上限保留，没有新增套餐或常驻收费服务。
+生产回读：首章8984汉字/79分/5审与全部备份checksum在部署前后完全一致；第二章4587字候选仍在，canRegenerate=true。现有1条V2真实请求为本人此前启动的短稿，任务blocked/target2/generation2。此次修复部署0真实模型调用，无自动续跑。52项自动检查通过，最终相关8项通过；原证书及APK源码hash验证通过。手机实机复测及新的真实长章效果仍待本人安装后使用。
 
-Dockerfile：v2/Dockerfile；启动node v2/server/main.mjs；健康/healthz。实际状态2.0.0/protocol2、workerReady=true、modelApiDisabled=false。原身份/凭证保持，7项待部署变更已应用，不再等待原审批。
+云端：https://novel-factory-cloud-production.up.railway.app 。原服务更新，未另建资源。固定source main/baf6612ce8150086acc577f3b523132193dc6053，构建元数据与受保护/api/status回读一致。
 
-## 迁移与备份
+项目2b3536c7-bc05-4787-9a1a-63f5396a8bfa / production de2133f0-5546-493a-8b35-e3373bed5dce / service 8dfb074f-1290-467a-9f18-0464946c073c / volume ba0c3e58-1779-4eed-870f-26051f8a9bd9。Dockerfile v2/Dockerfile；启动node v2/server/main.mjs；健康/healthz；单副本/原资源上限/原500MB /data卷。
 
-迁移于2026-10-19T16:23:31.064Z完成：1书/2章/98旧记录/30旧调用，默认暂停。旧执行器停止后，新入口检查旧租约和无reserved，调用SQLite一致性backup，integrity_check通过后才启动V2。物理备份及保险箱在/data/private-backups/before-v2，清单manifest.json；该位置是私有数据，不进入GitHub。启动成功与固定源码执行顺序证明上述迁移门通过；没有另行用远程终端列目录。
+## 数据与回退
 
-旧库/data/novel.sqlite保留，新库/data/v2/novel.sqlite独立。通过/v2/state与/v2/backup实际回读首章8984汉字/79分/5审、正文hash与原稿逐字一致、6旧历史版本/30旧调用；原target10任务stopped、V2 steps0。生产导出备份已在私有本地SQLite恢复验证，默认暂停；验收0真实模型请求。
+2.0.1没有库结构迁移，不启动已阻塞任务。首次V2迁移的旧库、原保险箱与私有物理备份继续保留。修复前后的完整逻辑备份checksum一致；首章、候选、历史、usage和任务状态保持。最新生产备份本地恢复默认暂停通过。
 
-## 回退
+需回退时先停止任务、核对在途请求并导出最新备份。保留V2新增稿件；原2.0.0部署be62107d-2993-4af9-bbad-1630b45ee48c可作为上一版，后台版本回退不能修复旧APK的表单轮询问题。禁止简单恢复旧备份覆盖用户后来稿件。文档更新不需再次部署；固定commit期间分支更新不会自动发布。
 
-先在V2停止任务并关闭模型调用，确认在途情况；保留V2库和导出备份。原旧库保留，不允许旧二进制读取V2库。回退原0.14.3部署前，恢复对应旧数据库/保险箱一致性快照并保持任务暂停；保留V2新增稿件，不简单回旧二进制覆盖新数据。普通文档更新不需要再次部署。
-
-此前取消确认的记录为历史；用户权限已允许所有操作，取消内部原因未返回，不能再把取消归咎用户拒绝。本次实际部署已经成功。
+此前2.0.0审批取消属于历史；此次通过正常服务源码连接完成已授权的修复部署。

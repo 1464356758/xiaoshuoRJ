@@ -1,0 +1,33 @@
+{
+  "version": "2.0.1",
+  "build": "baf6612ce8150086acc577f3b523132193dc6053",
+  "protocol": 2,
+  "workerReady": true,
+  "serverIdentityPreserved": true,
+  "controlCredentialPreserved": true,
+  "entireBackupChecksumUnchanged": true,
+  "firstChapterHan": 8984,
+  "firstChapterValidReviews": 5,
+  "firstChapterAccepted": true,
+  "savedCandidateHan": 4587,
+  "candidateRecoveryAvailable": true,
+  "savedRequests": 1,
+  "newProductionModelRequests": 0,
+  "jobs": [
+    {
+      "state": "blocked",
+      "generation": 2,
+      "target": 2
+    }
+  ],
+  "deploymentId": "56e73456-f527-4999-a6b1-137592ebff6c",
+  "deploymentStatus": "SUCCESS",
+  "checkedAt": "2026-10-20 04:06（上海）",
+  "android": {
+    "version": "2.0.1",
+    "versionCode": 20,
+    "sha256": "9526cd8cec1f4777b46e9214016d8b318f8c876325fc3a999d2db49ebc9de2a8",
+    "originalCertificateVerified": true,
+    "realDeviceVerified": false
+  }
+}
