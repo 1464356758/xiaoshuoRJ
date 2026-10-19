@@ -1,0 +1,21 @@
+// All novels, keys, provider replies and literary scores here are SYNTHETIC fixtures.
+import {createServer} from 'node:http';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {randomBytes} from 'node:crypto';
+import {Store,hash} from '../server/store.mjs';
+import {Engine} from '../server/engine.mjs';
+import {createService} from '../server/service.mjs';
+import {paragraphs,dimensions} from '../server/quality.mjs';
+export const body=Array.from({length:5},(_,i)=>'合成测试第'+['甲','乙','丙','丁','戊'][i]+'段。'+('山路上有人留下脚印，他把灯移近，先问对方要什么，再决定付出自己的那份代价。').repeat(5)).join('\n\n');
+export const outline=n=>({number:n,title:'合成章'+n,start:'合成开场',conflict:'合成冲突',choice:'合成选择',cost:'合成代价',change:'合成推进'+n,reward:'合成兑现',end:'合成章末',preserve:['不进入下一章']});
+export function report(c,{score=90,issue=false}={}){let remaining=score;const dims=dimensions.map(([id,,max],i)=>{const v=i===5?remaining:Math.min(max,Math.round(score*max/100));remaining-=v;return {id,score:v,reason:'合成评分理由',paragraphId:'P001',quote:paragraphs(c.body)[0].text.slice(0,15)};});return {bodyHash:c.hash,dimensions:dims,issues:issue?[{id:'I-01',paragraphId:'P001',quote:paragraphs(c.body)[0].text.slice(0,15),severity:'major',problem:'合成人物缺少明确条件',action:'在第一段增加一个自己的条件',acceptance:'条件使本章选择有代价'}]:[],facts:[],summary:'明确标注的合成审核'};}
+export function answer(payload,score=90){const u=payload.messages.at(-1).content;let x;try{x=JSON.parse(u);}catch{return 'OK';}if(x.phase)return JSON.stringify({bible:{sellingPoint:'合成',ending:'合成终局'},outlines:Array.from({length:x.to-x.from+1},(_,i)=>outline(x.from+i))});if(x.protocol){const p=x.task.paragraphs[0];return JSON.stringify({baseHash:x.task.baseHash,edits:[{paragraphId:p.id,expectedHash:p.hash,replacement:p.text+'他提出一个新条件。',issueIds:x.task.issues.map(i=>i.id)}],unresolved:[]});}if(x.bodyHash)return JSON.stringify(report({hash:x.bodyHash,body:x.paragraphs.map(p=>p.text).join('\n\n')},{score,issue:score<85}));return body;}
+export async function fixture(opts={}){const dir=mkdtempSync(join(tmpdir(),'novel-v2-synthetic-'));const calls=[];let respond=opts.respond;const provider=createServer(async(req,res)=>{let raw='';for await(const c of req)raw+=c;const payload=JSON.parse(raw);calls.push(payload);if(respond){await respond(req,res,payload,calls);return;}res.writeHead(200,{'Content-Type':'application/json','x-request-id':'SYNTHETIC-'+calls.length});res.end(JSON.stringify({id:'SYNTHETIC-'+calls.length,choices:[{finish_reason:'stop',message:{content:answer(payload,opts.score||90)}}],usage:{prompt_tokens:100,completion_tokens:200,prompt_cache_hit_tokens:20,prompt_cache_miss_tokens:80}}));});await new Promise(r=>provider.listen(0,'127.0.0.1',r));const s=new Store(join(dir,'v2.sqlite'));const secret=randomBytes(32).toString('base64');const e=new Engine(s,secret,{endpoint:'http://127.0.0.1:'+provider.address().port,interval:3600000,timeoutMs:opts.timeoutMs||2000,hooks:opts.hooks||{}});const service=createService(e,{serverId:'synthetic-server-id',controlToken:'SYNTHETIC_CONTROL_TOKEN',build:'synthetic-test'});await service.listen();const base='http://127.0.0.1:'+service.server.address().port;
+ async function api(path='/v2/state',data){const r=await fetch(base+path,{method:data?'POST':'GET',headers:{Authorization:'Bearer SYNTHETIC_CONTROL_TOKEN','X-Novel-Server-Id':'synthetic-server-id','Content-Type':'application/json'},...(data?{body:JSON.stringify(data)}:{})});return {status:r.status,data:await r.json()};}
+ async function action(action,input={},extra={}){return api('/v2/action',{action,input,...extra});}
+ await action('settings',{revision:0,apiKey:'SYNTHETIC_KEY_ONLY',authorized:true});const b=(await action('create',{id:'SYNTHETIC_BOOK',title:'合成测试书',direction:'明确为合成故障测试数据',totalChapters:2,targetHan:700,minHan:500,maxHan:1000})).data.result;
+ async function tick({advanceRate=true}={}){if(advanceRate)s.run("UPDATE steps SET data=json_set(data,'$.intentAt',0) WHERE json_extract(data,'$.intentAt') IS NOT NULL");return e.tick();}
+ async function close(){await service.close();provider.closeAllConnections();await new Promise(r=>provider.close(r));rmSync(dir,{recursive:true,force:true});}
+ return {dir,s,e,service,api,action,b,calls,tick,close,setRespond(fn){respond=fn;}};}

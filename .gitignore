@@ -68,3 +68,5 @@ __pycache__/
 *.p12
 *.jks
 *.keystore
+/v2/android/build/
+/v2/data/
