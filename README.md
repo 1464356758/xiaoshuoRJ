@@ -8,7 +8,7 @@
 
 [项目源码与运行说明](ai-chat/README.md) · [当前状态](PROJECT_STATUS.md) · [接续](NEXT_ACTION.md) · [测试](TEST_REPORT.md) · [官方协议资料](ai-chat/docs/API-SOURCES.md)
 
-APK SHA256：9751703333645bc7b200df68633c7563768aa4b7badd9325c88da2989acad391
+APK SHA256：50f6bead189a1c9de778ac4ccc084a7c09708b297dab5ff246fc21a187fb1987
 
 手机直接连接本人选择的API服务商，保存配置/读模型不生成内容；每次发送最多主动生成一次，无自动重发/换模型。密钥不进入备份。此版为文字聊天，图片、语音、生图、联网工具、跨设备云同步尚未实现。
 

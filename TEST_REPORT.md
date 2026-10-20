@@ -16,7 +16,7 @@ Android15原生UI/SQLite 13项：启动零请求、切页保留草稿、项目/�
 
 ## APK
 
-版本1.0.0/code1；包名cn.aiworkspace.personal；66013字节；SHA256 9751703333645bc7b200df68633c7563768aa4b7badd9325c88da2989acad391。原用户证书SHA256 1c913e9304e40677de03d693eabc032118f51b7145fe769563925a198c0f54ff。manifest、DEX、v1-v3签名、zipalign及全部源码hash通过。
+版本1.0.0/code1；包名cn.aiworkspace.personal；66013字节；SHA256 50f6bead189a1c9de778ac4ccc084a7c09708b297dab5ff246fc21a187fb1987。原用户证书SHA256 1c913e9304e40677de03d693eabc032118f51b7145fe769563925a198c0f54ff。manifest、DEX、v1-v3签名、zipalign及全部源码hash通过。
 
 ## 未验证
 

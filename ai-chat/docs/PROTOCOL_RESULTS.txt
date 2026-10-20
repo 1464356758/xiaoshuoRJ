@@ -15,7 +15,7 @@ PASS HTTP rejected
 PASS URL embedded credentials rejected
 PASS URL query key rejected
 PASS multiple generation override rejected
-PASS partial interrupted answer excluded from next context
+PASS visible partial preserved for explicit continuation without automatic replay
 PASS project instructions and references included without another call
 PASS long context rejected without silent history truncation
 PASS export recursively removes credentials
