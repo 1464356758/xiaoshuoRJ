@@ -1,0 +1,42 @@
+PASS chat key absent from body
+PASS chat protocol authentication
+PASS chat HTTPS endpoint
+PASS responses key absent from body
+PASS responses protocol authentication
+PASS responses HTTPS endpoint
+PASS claude key absent from body
+PASS claude protocol authentication
+PASS claude HTTPS endpoint
+PASS gemini key absent from body
+PASS gemini protocol authentication
+PASS gemini HTTPS endpoint
+PASS full chat endpoint normalized once
+PASS HTTP rejected
+PASS URL embedded credentials rejected
+PASS URL query key rejected
+PASS multiple generation override rejected
+PASS partial interrupted answer excluded from next context
+PASS project instructions and references included without another call
+PASS long context rejected without silent history truncation
+PASS export recursively removes credentials
+PASS chat SSE accumulated
+PASS chat SSE usage recorded
+PASS Responses SSE accumulated
+PASS Claude native stream and cumulative usage
+PASS Gemini native stream extracts public text
+PASS token limit is incomplete, preserves answer
+PASS SSE BOM CRLF multiline and final event
+PASS Responses non-stream with null error is valid
+PASS Claude non-stream parsed
+PASS Gemini non-stream parsed
+PASS real HTTP split UTF8 stream parsed
+PASS one send is exactly one HTTP request
+PASS drop never automatically retries or follows redirect
+PASS drop hides API key from errors
+PASS redirect never automatically retries or follows redirect
+PASS redirect hides API key from errors
+PASS 401 never automatically retries or follows redirect
+PASS 401 hides API key from errors
+PASS broken never automatically retries or follows redirect
+PASS broken hides API key from errors
+TOTAL 41 PASSED

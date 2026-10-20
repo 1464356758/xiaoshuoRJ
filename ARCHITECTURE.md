@@ -1,21 +1,13 @@
-# V2实际架构
+# AI工作台架构
 
-Android原生Java Activity负责界面、HTTPS控制与AndroidKeyStore中的云端连接凭证。模型密钥仅在云端AES-256-GCM保险箱中保存。沿用原云端server-secrets身份，不重新发明用户数据归属。
+原生Java Activity、SQLiteOpenHelper、AndroidKeyStore、前台ChatService。手机直接HTTPS连接用户选择的服务商，无中心代理、网页登录或小说任务引擎。独立包名cn.aiworkspace.personal。
 
-Node24 + node:sqlite，单副本执行器；核心代码独立于旧网页引擎。SQLite是事实来源。books/chapters/versions/reviews/jobs/steps/archive保存书、章、历史、有效审核、任务、请求步骤和完整旧记录。每章审次数是持久字段，不因配置或重启清零。数据库WAL/FULL同步、事务和执行器期限租约。
+Store保存projects/providers/chats/messages/requests/files。项目说明与参考文件注入该项目每段聊天，其他对话消息不混入。composerChatId绑定输入视图，跨页/跨对话保存草稿时不写错归属。附件按对话在本次进程内保留，项目参考文件持久保存。
 
-步骤状态：queued → intended → sending → responded → applied。intended/sending中断后unknown，不能自动重发。完整响应确定性本地解析失败rejected，付费结果保留；可以本人本地重验。普通继续不改变已发送身份。章节：draft → review → repair → review → accepted；初审算1，最多5次，最后按真实分数收稿标待精修。
+ApiProtocol实现OpenAI Chat/Responses、Claude、Gemini的请求与流式/非流式解析；ApiClient单次固定长度HTTP，不跟随重定向，不设应用自动重试或备用模型。SSE支持UTF8分块、CRLF、注释、多行与末尾事件，保留usage/结束原因/部分文本。错误消息隐藏Key。
 
-统一出口provider.mjs只创建一次Node ClientRequest，无SDK、重定向、重试、备用模型、额外工具或长章分段。停止事务先增加运行代次并阻止新请求，再Abort等待；旧执行器不能继续。取消不承诺供应商已接受的计算零费用。分钟6次/小时60次共享限制；金额只记账，无金额门。授权可持久保存并随时关闭。
+点击发送先在SQLite事务中保存用户消息、空回答、不可变参数快照和queued请求；正式发HTTP前记录发送意图并改sending。前台服务执行并持久化增量，切页不重置页面。结束为done/incomplete/error；停止先持久stopped再断开等待，迟到响应不能覆盖。进程重启把queued/sending标interrupted，不自动重发。全局同时一条生成请求，其他对话可查看和编辑草稿。
 
-策划一次生成全书骨架和首5章，滚动边界独立请求单列。本章任务从已存路线本地整理。总监本地消费已存问题，0模型请求。写作纯正文；返修按段落ID/hash提交局部替换；复审同时读取全文与真实diff。范围验证不能证明文学改善或平台签约。
+Key以AES-GCM加密并由AndroidKeyStore主密钥保护。备份递归移除keyCipher/apiKey，恢复合并不覆盖已有ID，并将活跃请求与消息改为interrupted；不导入密钥或自动启动。应用数据私有、系统自动备份关闭。用户可自行导出完整备份和Markdown。
 
-旧库/data/novel.sqlite及所有旧记录保留。新库/data/v2/novel.sqlite。启动迁移前确认旧租约失效且无reserved在途；Node SQLite online backup生成私有物理备份并integrity_check；复制原保险箱，校验hash后迁移，默认暂停。完整旧记录归档于V2私库，移植历史版本和真实计数。模型配置只在服务器解密再加密，既有授权保留但不启动任务。可移植作品备份不携带明文或密文密钥。
-
-旧接口返回410防旧App收费，新接口/v2/state、/v2/action、/v2/versions、/v2/step、/v2/backup、/v2/export，仍需Bearer及原serverId；/api/status提供协议2连接核对。健康与进度读取永不调用模型。
-
-## 2.0.1原生页面与候选恢复
-
-原生UiSession校验页面代次与作品，背景进度读取独立于写操作锁，只更新进度文字。编辑页不接受轮询重建，新建/正文/未来规划输入保存在应用私有草稿中；密钥不写入该草稿。模型设置固定可见。
-
-受保护/v2/state增加当前作品pendingSteps，/v2/step提供已保存正文候选。额外初稿重写仅允许完整、已知、被拒绝的初稿，并要求confirmExtraCall=true和baseHash匹配；任务键由源候选派生，原记录superseded但raw/usage/费用保留。每个明确新任务最多主动发送一次，成功后任务暂停；后续审核由本人继续，失败不自动重开。未知/截断结果不可走此入口。人工补全空章不创建空hash历史稿。
+边界：文字版；TXT/MD附件与项目参考；Markdown基础排版/代码复制。没有图片/音频/视频、自动联网/工具、云端任务或多设备同步。后台前台服务受手机系统管理，强制结束进程可能中断，但不自动补发。

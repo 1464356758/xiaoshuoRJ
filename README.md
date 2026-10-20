@@ -1,13 +1,15 @@
-# 小说工厂 V2.0.1｜表单与候选恢复修复
+# AI 工作台｜安卓多AI聊天与项目
 
-2026-10-20 04:06（上海）：V2云端2.0.1已上线，部署56e73456-f527-4999-a6b1-137592ebff6c SUCCESS，实际build baf6612ce8150086acc577f3b523132193dc6053。APK2.0.1/code20需覆盖安装，云端地址和凭证沿用。
+2026-10-20 09:48（上海）：用户已停止小说软件开发，当前产品为独立安卓“AI工作台”。源码位于ai-chat，包名cn.aiworkspace.personal，版本1.0.0/code1。已完成同用户证书签名的可安装APK。
 
-修复新建/编辑页被5秒轮询切回的问题，后台只更新进度文字，固定显示“模型设置”。本机保留表单与编辑草稿。短候选可直接查看、载入人工编辑或明确额外重写一次；新重写成功后先暂停，点击继续才审核。原稿、候选、usage与五审次数保留。
+功能：项目/多对话、项目指令和TXT/Markdown参考、流式文字聊天、四种协议、多服务商与模型切换、自定义地址/模型/参数、AndroidKeyStore加密Key、本机SQLite、消息复制/代码块、停止/中断保存、前台回复服务、备份合并导入及Markdown导出、浅色/深色外观。
 
-生产回读：首章8984汉字/79分/5审与全部备份checksum在部署前后完全一致；第二章4587字候选仍在，canRegenerate=true。现有1条V2真实请求为本人此前启动的短稿，任务blocked/target2/generation2。此次修复部署0真实模型调用，无自动续跑。52项自动检查通过，最终相关8项通过；原证书及APK源码hash验证通过。手机实机复测及新的真实长章效果仍待本人安装后使用。
+41项协议/本地真实HTTP检查和13项Android15 Robolectric原生UI/SQLite测试通过，包括真实按钮点击、草稿隔离、API配置保存、项目创建、单次HTTP、无自动重试、停止竞态与备份恢复。已实际渲染并检查界面。加密测试使用测试边界替身，不称真实硬件KeyStore实测；未使用真实厂商Key收费测试，也未在用户手机安装运行。
 
-云端：https://novel-factory-cloud-production.up.railway.app
+[项目源码与运行说明](ai-chat/README.md) · [当前状态](PROJECT_STATUS.md) · [接续](NEXT_ACTION.md) · [测试](TEST_REPORT.md) · [官方协议资料](ai-chat/docs/API-SOURCES.md)
 
-[当前状态](PROJECT_STATUS.md) · [操作接续](NEXT_ACTION.md) · [架构](ARCHITECTURE.md) · [修复细节](v2/docs/V201-REGRESSION.md) · [测试](TEST_REPORT.md) · [部署与回退](DEPLOYMENT.md)
+APK SHA256：9751703333645bc7b200df68633c7563768aa4b7badd9325c88da2989acad391
 
-独立原生Java安卓 + Node24 + SQLite。原项目/持久卷/身份/密钥/私稿保留，无新收费资源。源码不含私人凭证和小说正文。
+手机直接连接本人选择的API服务商，保存配置/读模型不生成内容；每次发送最多主动生成一次，无自动重发/换模型。密钥不进入备份。此版为文字聊天，图片、语音、生图、联网工具、跨设备云同步尚未实现。
+
+旧小说软件已停止开发，原源码、稿件与云端数据保留，旧说明归档于docs/history/novel-v2-20261020。新App使用独立包名，不读取旧云端控制凭证；没有为新App部署收费中心服务器。
